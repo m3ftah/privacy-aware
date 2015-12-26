@@ -10,15 +10,16 @@
     android:orientation="vertical"
     tools:context="fr.rsommerard.privacyaware.MainActivity">
 
-    <Button
-        android:id="@+id/button_start_service"
-        android:layout_width="fill_parent"
+    <ListView
+        android:id="@+id/listview_peers"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Start P2PService" />
+        android:layout_weight="1" />
 
     <Button
-        android:id="@+id/button_stop_service"
+        android:id="@+id/button_process"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Stop P2PService" />
+        android:layout_weight="0"
+        android:text="Start process" />
 </LinearLayout>
