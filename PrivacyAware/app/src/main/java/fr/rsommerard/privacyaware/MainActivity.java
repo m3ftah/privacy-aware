@@ -4,7 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.NetworkInfo;
+import android.net.wifi.WpsInfo;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
@@ -22,6 +26,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -102,8 +107,7 @@ public class MainActivity extends AppCompatActivity {
 
         mWifiIntentFilter = new IntentFilter();
         mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-
-        mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
         mWifiDirectBroadcastReceiver = new WifiDirectBroadcastReceiver();
         registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
@@ -193,8 +197,12 @@ public class MainActivity extends AppCompatActivity {
         mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mWifiP2pDnsSdServiceRequest, null);
 
         mTimer = new Timer();
-        mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 5000);
-        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 0, 7000);
+        mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 31000);
+        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
+
+
+        mTimer.scheduleAtFixedRate(new ConnectToRandomPeerTimerTask(), 37000, 37000);
+
 
         setStopProcessOnClick();
 
@@ -205,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            Log.d(TAG, "DiscoverServicesTimerTask");
+            //Log.d(TAG, "DiscoverServicesTimerTask");
             mTempPeers.clear();
             mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
         }
@@ -228,6 +236,23 @@ public class MainActivity extends AppCompatActivity {
                     mWifiDirectEnable = false;
                 }
             }
+
+            if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+                WifiP2pInfo wifiP2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
+                Log.d(TAG, wifiP2pInfo.toString());
+
+                NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                Log.d(TAG, networkInfo.toString());
+
+                if (networkInfo.isConnected()) {
+                    // we are connected with the other device, request connection
+                    // info to find group owner IP
+                    Log.d(TAG, "Devices connected");
+                } else {
+                    // It's a disconnect
+                    Log.d(TAG, "Devices disconnected");
+                }
+            }
         }
     }
 
@@ -237,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
         public void onDnsSdTxtRecordAvailable(String fullDomainName,
                                               Map<String, String> txtRecordMap,
                                               final WifiP2pDevice peer) {
-            Log.d(TAG, "Peer found: " + peer.deviceName);
+            //Log.d(TAG, "Peer found: " + peer.deviceName);
 
             if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
                 return;
@@ -259,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            Log.d(TAG, "NotifyPeersAdapterTimerTask");
+            //Log.d(TAG, "NotifyPeersAdapterTimerTask");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -268,6 +293,59 @@ public class MainActivity extends AppCompatActivity {
                     mPeersAdapter.notifyDataSetChanged();
                 }
             });
+        }
+    }
+
+    private class ConnectToRandomPeerTimerTask extends TimerTask {
+
+        @Override
+        public void run() {
+            Log.d(TAG, "ConnectToRandomPeerTimerTask");
+
+            if (mPeers.isEmpty()) {
+                Log.e(TAG, "No peer available");
+                return;
+            }
+
+            int numberOfPeers = mPeers.size();
+
+            Random rand = new Random();
+            int index = rand.nextInt(numberOfPeers);
+
+            Peer peer = mPeers.get(index);
+
+            WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
+            wifiP2pConfig.deviceAddress = peer.getAddress();
+            wifiP2pConfig.wps.setup = WpsInfo.PBC;
+
+            Log.d(TAG, "Peer selected: " + peer);
+
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+
+            mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Log.e(TAG, "Connection failed: " + getReasonName(reason));
+                }
+            });
+        }
+    }
+
+    private String getReasonName(int reason) {
+        switch(reason) {
+            case WifiP2pManager.P2P_UNSUPPORTED:
+                return "P2P_UNSUPPORTED";
+            case WifiP2pManager.BUSY:
+                return "BUSY";
+            case WifiP2pManager.ERROR:
+                return "ERROR";
+            default:
+                return "UKNOWN_REASON";
         }
     }
 }
