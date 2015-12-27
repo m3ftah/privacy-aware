@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean mWifiDirectEnable;
 
+    private boolean mConnectToDeviceEnable;
+
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
 
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Timer mTimer;
     private Button mProcessButton;
+    private Button mConnectButton;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -77,6 +80,30 @@ public class MainActivity extends AppCompatActivity {
         mProcessButton.setText(R.string.stop_process);
     }
 
+    private void setConnectToPeerEnabledOnClick() {
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mConnectToDeviceEnable = true;
+                setConnectToPeerDisabledOnClick();
+            }
+        });
+
+        mConnectButton.setText(R.string.connect_disabled);
+    }
+
+    private void setConnectToPeerDisabledOnClick() {
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mConnectToDeviceEnable = false;
+                setConnectToPeerEnabledOnClick();
+            }
+        });
+
+        mConnectButton.setText(R.string.connect_enabled);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +111,9 @@ public class MainActivity extends AppCompatActivity {
 
         mProcessButton = (Button) findViewById(R.id.button_process);
         setStartProcessOnClick();
+
+        mConnectButton = (Button) findViewById(R.id.button_connect);
+        setConnectToPeerEnabledOnClick();
 
         mPeers = new ArrayList<>();
         mTempPeers = new ArrayList<>();
@@ -198,11 +228,9 @@ public class MainActivity extends AppCompatActivity {
 
         mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 31000);
-        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
-
+        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 17000, 17000);
 
         mTimer.scheduleAtFixedRate(new ConnectToRandomPeerTimerTask(), 37000, 37000);
-
 
         setStopProcessOnClick();
 
@@ -248,6 +276,9 @@ public class MainActivity extends AppCompatActivity {
                     // we are connected with the other device, request connection
                     // info to find group owner IP
                     Log.d(TAG, "Devices connected");
+
+                    mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+                    mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
                 } else {
                     // It's a disconnect
                     Log.d(TAG, "Devices disconnected");
@@ -302,8 +333,13 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             Log.d(TAG, "ConnectToRandomPeerTimerTask");
 
+            if (!mConnectToDeviceEnable) {
+                Log.i(TAG, "Connect to peer disabled");
+                return;
+            }
+
             if (mPeers.isEmpty()) {
-                Log.e(TAG, "No peer available");
+                Log.i(TAG, "No peer available");
                 return;
             }
 
