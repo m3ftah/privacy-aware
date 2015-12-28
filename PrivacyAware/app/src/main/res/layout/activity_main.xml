@@ -21,5 +21,12 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
-        android:text="Start process" />
+        android:text="@string/start_process" />
+
+    <Button
+        android:id="@+id/button_connect"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/connect_disabled" />
 </LinearLayout>
