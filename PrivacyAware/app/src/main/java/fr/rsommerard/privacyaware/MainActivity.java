@@ -357,13 +357,17 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         public void onDnsSdTxtRecordAvailable(String fullDomainName,
                                               Map<String, String> txtRecordMap,
                                               final WifiP2pDevice peer) {
-            Log.d(TAG, "Peer found: " + peer.deviceName);
+            Log.d(TAG, "Peer found: " + peer);
 
             if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
                 return;
             }
 
             if (!fullDomainName.contains(SERVICE_NAME)) {
+                return;
+            }
+
+            if (peer.deviceName.isEmpty()) {
                 return;
             }
 
@@ -379,7 +383,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         @Override
         public void run() {
-            //Log.d(TAG, "NotifyPeersAdapterTimerTask");
+            Log.d(TAG, "NotifyPeersAdapterTimerTask");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
