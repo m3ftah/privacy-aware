@@ -29,8 +29,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
     private final String SERVICE_NAME = "_rsp2p";
     private final String SERVICE_TYPE = "_presence._tcp";
+
+    private PeerManager mPeerManager;
 
     private boolean mWifiDirectEnable;
 
@@ -55,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     private WifiP2pDnsSdServiceRequest mWifiP2pDnsSdServiceRequest;
 
     private ArrayAdapter<Peer> mPeersAdapter;
-    private ArrayList<Peer> mPeers;
 
     private Peer mPeerSelected;
 
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
     private PassiveThread mPassiveThread;
     private ActiveThread mActiveThread;
+    private List<Peer> mPeersToDisplay;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -106,10 +108,11 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             }
         });
 
-        mPeers = new ArrayList<>();
+        mPeerManager = PeerManager.getInstance();
 
+        mPeersToDisplay = new ArrayList<>();
         mPeersAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, mPeers);
+                android.R.layout.simple_list_item_1, mPeersToDisplay);
 
         ListView peersListView = (ListView) findViewById(R.id.listview_peers);
         peersListView.setAdapter(mPeersAdapter);
@@ -136,20 +139,15 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     }
 
     private void connectToRandomPeer() {
-        if (mPeers.isEmpty()) {
-            Log.i(TAG, "No peer available");
-            return;
-        }
-
         mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
         mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
 
-        int numberOfPeers = mPeers.size();
+        mPeerSelected = mPeerManager.getPeer();
 
-        Random rand = new Random();
-        int index = rand.nextInt(numberOfPeers);
-
-        mPeerSelected = mPeers.get(index);
+        if (mPeerSelected == null) {
+            Log.i(TAG, "No peer available");
+            return;
+        }
 
         WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
         wifiP2pConfig.deviceAddress = mPeerSelected.getAddress();
@@ -225,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             mTimer.purge();
         }
 
-        mPeers.clear();
+        mPeersToDisplay.clear();
         mPeersAdapter.notifyDataSetChanged();
 
         if (mWifiP2pManager != null) {
@@ -260,7 +258,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             return;
         }
 
-        mPeers.clear();
         mPeersAdapter.notifyDataSetChanged();
 
         registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
@@ -294,7 +291,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 11000);
         mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
-        mTimer.scheduleAtFixedRate(new ClearPeersTimerTask(), 61000, 61000);
 
         setStopProcessOnClick();
 
@@ -382,11 +378,9 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 return;
             }
 
-            final Peer newPeer = new Peer(peer, Integer.parseInt(txtRecordMap.get("port")));
+            final Peer newPeer = new Peer(peer, txtRecordMap.get("port"));
 
-            if (!mPeers.contains(newPeer)) {
-                mPeers.add(newPeer);
-            }
+            mPeerManager.addPeer(newPeer);
         }
     }
 
@@ -398,6 +392,8 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    mPeersToDisplay.clear();
+                    mPeersToDisplay.addAll(mPeerManager.getPeers());
                     mPeersAdapter.notifyDataSetChanged();
                 }
             });
@@ -420,14 +416,5 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     private void disconnectFromPeer() {
         mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
         mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
-    }
-
-    private class ClearPeersTimerTask extends TimerTask {
-
-        @Override
-        public void run() {
-            Log.d(TAG, "ClearPeersTimerTask");
-            mPeers.clear();
-        }
     }
 }

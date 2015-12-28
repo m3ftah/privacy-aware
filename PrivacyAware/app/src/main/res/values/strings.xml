@@ -6,7 +6,7 @@
 
     <string name="peer_details">Peer details</string>
 
-    <string name="connect">Connect to a random peer</string>
+    <string name="connect">Connect to a peer</string>
 
     <string name="ok">Ok</string>
 </resources>

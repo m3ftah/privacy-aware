@@ -8,16 +8,14 @@ public class Peer {
     private String mAddress;
     private int mPort;
 
-    public Peer(String name, String address, int port) {
-        mName = name;
-        mAddress = address;
-        mPort = port;
-    }
-
     public Peer(WifiP2pDevice peer, int port) {
         mName = peer.deviceName;
         mAddress = peer.deviceAddress;
         mPort = port;
+    }
+
+    public Peer(WifiP2pDevice peer, String port) {
+        this(peer, Integer.parseInt(port));
     }
 
     @Override
