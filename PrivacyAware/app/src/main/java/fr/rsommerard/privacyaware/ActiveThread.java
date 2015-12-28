@@ -52,7 +52,7 @@ public class ActiveThread extends Thread implements Runnable {
 
             OutputStream outputStream = socket.getOutputStream();
 
-            String message = "Réfléchir, c'est fléchir deux fois ! A. Damasio";
+            String message = "Réfléchir, c'est fléchir deux fois. A. Damasio";
 
             byte[] buffer = message.getBytes();
             outputStream.write(buffer);
