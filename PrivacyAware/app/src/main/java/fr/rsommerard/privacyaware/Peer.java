@@ -6,16 +6,16 @@ public class Peer {
 
     private String mName;
     private String mAddress;
-    private String mPort;
+    private int mPort;
 
-    public Peer(String name, String address, String port) {
+    public Peer(String name, String address, int port) {
         mName = name;
         mAddress = address;
         mPort = port;
     }
 
-    public Peer(WifiP2pDevice peer, String port) {
-        mName = peer.deviceName.isEmpty() ? "[EMPTY]" : peer.deviceName;
+    public Peer(WifiP2pDevice peer, int port) {
+        mName = peer.deviceName;
         mAddress = peer.deviceAddress;
         mPort = port;
     }
@@ -39,7 +39,7 @@ public class Peer {
         return mName;
     }
 
-    public String getPort() {
+    public int getPort() {
         return mPort;
     }
 

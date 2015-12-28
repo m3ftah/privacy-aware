@@ -8,10 +8,13 @@ import android.net.NetworkInfo;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -23,6 +26,12 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +39,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Handler.Callback {
 
     public final String TAG = MainActivity.class.getSimpleName();
 
@@ -40,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean mWifiDirectEnable;
 
     private boolean mConnectToDeviceEnable;
+
+    private Handler mHandler;
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
@@ -54,9 +65,16 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Peer> mPeers;
     private ArrayList<Peer> mTempPeers;
 
+    private Peer mPeerSelected;
+
     private Timer mTimer;
     private Button mProcessButton;
     private Button mConnectButton;
+
+    private ServerSocket mServerSocket;
+
+    private PassiveThread mPassiveThread;
+    private ActiveThread mActiveThread;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -135,6 +153,8 @@ public class MainActivity extends AppCompatActivity {
         mWifiP2pManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(this, getMainLooper(), null);
 
+        disconnectFromPeer();
+
         mWifiIntentFilter = new IntentFilter();
         mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
@@ -175,6 +195,19 @@ public class MainActivity extends AppCompatActivity {
             mWifiP2pManager.removeLocalService(mWifiP2pChannel, mWifiP2pDnsSdServiceInfo, null);
             mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, null);
             mWifiP2pManager.removeServiceRequest(mWifiP2pChannel, mWifiP2pDnsSdServiceRequest, null);
+
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+        }
+
+        if (mPassiveThread != null && mPassiveThread.isAlive()) {
+            mPassiveThread.interrupt();
+            mPassiveThread = null;
+        }
+
+        if (mActiveThread != null && mActiveThread.isAlive()) {
+            mActiveThread.interrupt();
+            mActiveThread = null;
         }
     }
 
@@ -195,6 +228,19 @@ public class MainActivity extends AppCompatActivity {
             mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, null);
             mWifiP2pManager.removeServiceRequest(mWifiP2pChannel, mWifiP2pDnsSdServiceRequest, null);
             mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+        }
+
+        if (mPassiveThread != null && mPassiveThread.isAlive()) {
+            mPassiveThread.interrupt();
+            mPassiveThread = null;
+        }
+
+        if (mActiveThread != null && mActiveThread.isAlive()) {
+            mActiveThread.interrupt();
+            mActiveThread = null;
         }
 
         setStartProcessOnClick();
@@ -213,8 +259,21 @@ public class MainActivity extends AppCompatActivity {
 
         registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
 
+        mHandler = new Handler(this);
+
+        try {
+            mServerSocket = new ServerSocket(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, String.valueOf(mServerSocket.getLocalPort()));
+
         Map<String, String> record = new HashMap<>();
-        record.put("port", "42");
+        record.put("port", String.valueOf(mServerSocket.getLocalPort()));
+
+        mPassiveThread = new PassiveThread(mServerSocket);
+        mPassiveThread.start();
 
         mWifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
 
@@ -235,6 +294,15 @@ public class MainActivity extends AppCompatActivity {
         setStopProcessOnClick();
 
         Toast.makeText(this, "Process started", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean handleMessage(Message message) {
+        if (message.obj.toString().equals("FINISH")) {
+            disconnectFromPeer();
+        }
+
+        return true;
     }
 
     private class DiscoverServicesTimerTask extends TimerTask {
@@ -258,11 +326,7 @@ public class MainActivity extends AppCompatActivity {
                 int wifiState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,
                         WifiP2pManager.WIFI_P2P_STATE_DISABLED);
 
-                if (wifiState == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
-                    mWifiDirectEnable = true;
-                } else {
-                    mWifiDirectEnable = false;
-                }
+                mWifiDirectEnable = (wifiState == WifiP2pManager.WIFI_P2P_STATE_ENABLED);
             }
 
             if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
@@ -277,8 +341,14 @@ public class MainActivity extends AppCompatActivity {
                     // info to find group owner IP
                     Log.d(TAG, "Devices connected");
 
-                    mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
-                    mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+                    if (wifiP2pInfo.isGroupOwner) {
+                        return;
+                    }
+
+                    Log.d(TAG, mPeerSelected.toString());
+                    Log.d(TAG, wifiP2pInfo.groupOwnerAddress.toString());
+                    mActiveThread = new ActiveThread(mPeerSelected, wifiP2pInfo.groupOwnerAddress, mHandler);
+                    mActiveThread.start();
                 } else {
                     // It's a disconnect
                     Log.d(TAG, "Devices disconnected");
@@ -293,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
         public void onDnsSdTxtRecordAvailable(String fullDomainName,
                                               Map<String, String> txtRecordMap,
                                               final WifiP2pDevice peer) {
-            //Log.d(TAG, "Peer found: " + peer.deviceName);
+            Log.d(TAG, "Peer found: " + peer.deviceName);
 
             if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
                 return;
@@ -303,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            final Peer newPeer = new Peer(peer, txtRecordMap.get("port"));
+            final Peer newPeer = new Peer(peer, Integer.parseInt(txtRecordMap.get("port")));
 
             if (!mTempPeers.contains(newPeer)) {
                 mTempPeers.add(newPeer);
@@ -343,21 +413,21 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+
             int numberOfPeers = mPeers.size();
 
             Random rand = new Random();
             int index = rand.nextInt(numberOfPeers);
 
-            Peer peer = mPeers.get(index);
+            mPeerSelected = mPeers.get(index);
 
             WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
-            wifiP2pConfig.deviceAddress = peer.getAddress();
+            wifiP2pConfig.deviceAddress = mPeerSelected.getAddress();
             wifiP2pConfig.wps.setup = WpsInfo.PBC;
 
-            Log.d(TAG, "Peer selected: " + peer);
-
-            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
-            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+            Log.d(TAG, "Peer selected: " + mPeerSelected);
 
             mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
                 @Override
@@ -383,5 +453,10 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return "UKNOWN_REASON";
         }
+    }
+
+    private void disconnectFromPeer() {
+        mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+        mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
     }
 }
