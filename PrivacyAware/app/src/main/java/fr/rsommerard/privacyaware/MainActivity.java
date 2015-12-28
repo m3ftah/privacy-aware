@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class MainActivity extends AppCompatActivity implements Handler.Callback {
 
@@ -280,8 +281,8 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 11000);
-        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 0, 3000);
-        mTimer.scheduleAtFixedRate(new ClearPeersTimerTask(), 0, 61000);
+        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
+        mTimer.scheduleAtFixedRate(new ClearPeersTimerTask(), 61000, 61000);
         mTimer.scheduleAtFixedRate(new ConnectToRandomPeerTimerTask(), 37000, 37000);
 
         setStopProcessOnClick();
@@ -339,6 +340,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
                     Log.d(TAG, mPeerSelected.toString());
                     Log.d(TAG, wifiP2pInfo.groupOwnerAddress.toString());
+
                     mActiveThread = new ActiveThread(mPeerSelected, wifiP2pInfo.groupOwnerAddress, mHandler);
                     mActiveThread.start();
                 } else {
@@ -377,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         @Override
         public void run() {
-            Log.d(TAG, "NotifyPeersAdapterTimerTask");
+            //Log.d(TAG, "NotifyPeersAdapterTimerTask");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
