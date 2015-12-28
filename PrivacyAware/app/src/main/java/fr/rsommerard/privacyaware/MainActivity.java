@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class MainActivity extends AppCompatActivity implements Handler.Callback {
 
@@ -43,8 +42,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     private final String SERVICE_TYPE = "_presence._tcp";
 
     private boolean mWifiDirectEnable;
-
-    private boolean mConnectToDeviceEnable;
 
     private Handler mHandler;
 
@@ -93,30 +90,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         mProcessButton.setText(R.string.stop_process);
     }
 
-    private void setConnectToPeerEnabledOnClick() {
-        mConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mConnectToDeviceEnable = true;
-                setConnectToPeerDisabledOnClick();
-            }
-        });
-
-        mConnectButton.setText(R.string.connect_disabled);
-    }
-
-    private void setConnectToPeerDisabledOnClick() {
-        mConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mConnectToDeviceEnable = false;
-                setConnectToPeerEnabledOnClick();
-            }
-        });
-
-        mConnectButton.setText(R.string.connect_enabled);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,7 +99,12 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         setStartProcessOnClick();
 
         mConnectButton = (Button) findViewById(R.id.button_connect);
-        setConnectToPeerEnabledOnClick();
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                connectToRandomPeer();
+            }
+        });
 
         mPeers = new ArrayList<>();
 
@@ -155,6 +133,40 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         mWifiDirectBroadcastReceiver = new WifiDirectBroadcastReceiver();
         registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
+    }
+
+    private void connectToRandomPeer() {
+        if (mPeers.isEmpty()) {
+            Log.i(TAG, "No peer available");
+            return;
+        }
+
+        mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
+        mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+
+        int numberOfPeers = mPeers.size();
+
+        Random rand = new Random();
+        int index = rand.nextInt(numberOfPeers);
+
+        mPeerSelected = mPeers.get(index);
+
+        WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
+        wifiP2pConfig.deviceAddress = mPeerSelected.getAddress();
+        wifiP2pConfig.wps.setup = WpsInfo.PBC;
+
+        Log.d(TAG, "Peer selected: " + mPeerSelected);
+
+        mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "Connection failed: " + getReasonName(reason));
+            }
+        });
     }
 
     private void showPeerDetails(Peer peer) {
@@ -283,7 +295,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         mTimer.scheduleAtFixedRate(new DiscoverServicesTimerTask(), 0, 11000);
         mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
         mTimer.scheduleAtFixedRate(new ClearPeersTimerTask(), 61000, 61000);
-        mTimer.scheduleAtFixedRate(new ConnectToRandomPeerTimerTask(), 37000, 37000);
 
         setStopProcessOnClick();
 
@@ -357,7 +368,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         public void onDnsSdTxtRecordAvailable(String fullDomainName,
                                               Map<String, String> txtRecordMap,
                                               final WifiP2pDevice peer) {
-            Log.d(TAG, "Peer found: " + peer);
+            Log.d(TAG, "Peer found: " + peer.deviceName);
 
             if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
                 return;
@@ -388,51 +399,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 @Override
                 public void run() {
                     mPeersAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-    }
-
-    private class ConnectToRandomPeerTimerTask extends TimerTask {
-
-        @Override
-        public void run() {
-            Log.d(TAG, "ConnectToRandomPeerTimerTask");
-
-            if (!mConnectToDeviceEnable) {
-                Log.i(TAG, "Connect to peer disabled");
-                return;
-            }
-
-            if (mPeers.isEmpty()) {
-                Log.i(TAG, "No peer available");
-                return;
-            }
-
-            mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
-            mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
-
-            int numberOfPeers = mPeers.size();
-
-            Random rand = new Random();
-            int index = rand.nextInt(numberOfPeers);
-
-            mPeerSelected = mPeers.get(index);
-
-            WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
-            wifiP2pConfig.deviceAddress = mPeerSelected.getAddress();
-            wifiP2pConfig.wps.setup = WpsInfo.PBC;
-
-            Log.d(TAG, "Peer selected: " + mPeerSelected);
-
-            mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                }
-
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "Connection failed: " + getReasonName(reason));
                 }
             });
         }

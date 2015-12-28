@@ -6,8 +6,7 @@
 
     <string name="peer_details">Peer details</string>
 
-    <string name="connect_disabled">Connect to peer: disabled</string>
-    <string name="connect_enabled">Connect to peer: enabled</string>
+    <string name="connect">Connect to a random peer</string>
 
     <string name="ok">Ok</string>
 </resources>

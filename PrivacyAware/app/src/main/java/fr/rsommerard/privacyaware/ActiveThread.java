@@ -52,6 +52,8 @@ public class ActiveThread extends Thread implements Runnable {
 
             OutputStream outputStream = socket.getOutputStream();
 
+            Log.d(TAG, "Sending message ...");
+
             String message = "Réfléchir, c'est fléchir deux fois. A. Damasio";
 
             byte[] buffer = message.getBytes();

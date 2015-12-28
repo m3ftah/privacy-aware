@@ -23,10 +23,6 @@ public class PassiveThread extends Thread implements Runnable {
     public void run() {
         super.run();
 
-        Log.i(TAG, "run()");
-        Log.i(TAG, mServerSocket.getInetAddress().toString());
-        Log.i(TAG, String.valueOf(mServerSocket.getLocalPort()));
-
         try {
             while(true) {
                 Socket socket = mServerSocket.accept();
