@@ -18,10 +18,9 @@ public class ActiveThread extends Thread implements Runnable {
     private final String TAG = ActiveThread.class.getSimpleName();
 
     private InetAddress mLocalAddress;
-
     private Handler mHandler;
-
     private Peer mPeer;
+    private DataManager mDataManager;
 
     public ActiveThread(Peer peer, InetAddress localAddress, Handler handler) {
         super();
@@ -29,6 +28,7 @@ public class ActiveThread extends Thread implements Runnable {
         mPeer = peer;
         mHandler = handler;
         mLocalAddress = localAddress;
+        mDataManager = DataManager.getInstance();
     }
 
     @Override
@@ -52,11 +52,11 @@ public class ActiveThread extends Thread implements Runnable {
 
             OutputStream outputStream = socket.getOutputStream();
 
-            Log.d(TAG, "Sending message ...");
+            Data data = mDataManager.getData();
 
-            String message = "Réfléchir, c'est fléchir deux fois. A. Damasio";
+            Log.d(TAG, "Sending \"" + data.getContent() + "\", to " + mPeer.getName());
 
-            byte[] buffer = message.getBytes();
+            byte[] buffer = data.getContent().getBytes();
             outputStream.write(buffer);
 
             socket.close();

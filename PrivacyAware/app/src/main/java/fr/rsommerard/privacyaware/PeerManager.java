@@ -59,5 +59,7 @@ public class PeerManager {
         }
 
         mPeers.add(peer);
+
+        Log.d(TAG, mPeers.toString());
     }
 }

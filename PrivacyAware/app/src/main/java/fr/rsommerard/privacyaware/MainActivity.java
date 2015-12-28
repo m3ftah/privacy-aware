@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     private final String SERVICE_TYPE = "_presence._tcp";
 
     private PeerManager mPeerManager;
+    private DataManager mDataManager;
 
     private boolean mWifiDirectEnable;
 
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         });
 
         mPeerManager = PeerManager.getInstance();
+        mDataManager = DataManager.getInstance();
 
         mPeersToDisplay = new ArrayList<>();
         mPeersAdapter = new ArrayAdapter<>(this,
@@ -310,7 +312,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         @Override
         public void run() {
-            Log.d(TAG, "DiscoverServicesTimerTask");
+            //Log.d(TAG, "DiscoverServicesTimerTask");
             mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
         }
     }
@@ -334,13 +336,14 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 Log.d(TAG, wifiP2pInfo.toString());
 
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-                Log.d(TAG, networkInfo.toString());
+                //Log.d(TAG, networkInfo.toString());
 
                 if (networkInfo.isConnected()) {
                     // we are connected with the other device, request connection
                     // info to find group owner IP
                     Log.d(TAG, "Devices connected");
 
+                    //TODO: fix th fact that group owner is randomly affected
                     if (wifiP2pInfo.isGroupOwner) {
                         return;
                     }
@@ -364,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         public void onDnsSdTxtRecordAvailable(String fullDomainName,
                                               Map<String, String> txtRecordMap,
                                               final WifiP2pDevice peer) {
-            Log.d(TAG, "Peer found: " + peer.deviceName);
+            //Log.d(TAG, "Peer found: " + peer.deviceName);
 
             if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
                 return;
@@ -378,9 +381,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 return;
             }
 
-            final Peer newPeer = new Peer(peer, txtRecordMap.get("port"));
-
-            mPeerManager.addPeer(newPeer);
+            mPeerManager.addPeer(new Peer(peer, txtRecordMap.get("port")));
         }
     }
 
@@ -388,7 +389,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         @Override
         public void run() {
-            Log.d(TAG, "NotifyPeersAdapterTimerTask");
+            //Log.d(TAG, "NotifyPeersAdapterTimerTask");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

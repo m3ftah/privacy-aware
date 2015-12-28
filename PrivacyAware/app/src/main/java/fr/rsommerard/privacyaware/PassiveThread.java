@@ -12,11 +12,13 @@ public class PassiveThread extends Thread implements Runnable {
     private final String TAG = PassiveThread.class.getSimpleName();
 
     private ServerSocket mServerSocket;
+    private DataManager mDataManager;
 
     public PassiveThread(ServerSocket serverSocket) {
         super();
 
         mServerSocket = serverSocket;
+        mDataManager = DataManager.getInstance();
     }
 
     @Override
@@ -32,7 +34,10 @@ public class PassiveThread extends Thread implements Runnable {
 
                 int bytes = inputStream.read(buffer);
 
-                Log.i(TAG, new String(buffer, 0, bytes));
+                Data data = new Data(new String(buffer, 0, bytes));
+                mDataManager.addData(data);
+
+                Log.d(TAG, "Received \"" + data.getContent() + "\"");
 
                 socket.close();
             }
