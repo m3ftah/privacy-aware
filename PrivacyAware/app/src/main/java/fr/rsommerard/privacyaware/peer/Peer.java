@@ -1,11 +1,14 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.peer;
 
 import android.net.wifi.p2p.WifiP2pDevice;
+
+import java.net.InetAddress;
 
 public class Peer {
 
     private String mName;
     private String mAddress;
+    private InetAddress mLocalAddress;
     private int mPort;
 
     public Peer(WifiP2pDevice peer, int port) {
@@ -29,6 +32,14 @@ public class Peer {
         return false;
     }
 
+    public InetAddress getLocalAddress() {
+        return mLocalAddress;
+    }
+
+    public void setLocalAddress(InetAddress localAddress) {
+        mLocalAddress = localAddress;
+    }
+
     public String getAddress() {
         return mAddress;
     }
@@ -44,4 +55,5 @@ public class Peer {
     public String toString() {
         return mName;
     }
+
 }

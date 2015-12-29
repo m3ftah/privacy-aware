@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.data;
 
 import android.util.Log;
 
@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class DataManager {
 
-    private final String TAG = PeerManager.class.getSimpleName();
+    private final String TAG = DataManager.class.getSimpleName();
 
     private static DataManager sInstance;
 

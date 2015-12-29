@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.data;
 
 public class Data {
 

@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.peer;
 
 import android.util.Log;
 

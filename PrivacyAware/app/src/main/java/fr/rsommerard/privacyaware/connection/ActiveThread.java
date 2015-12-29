@@ -1,5 +1,6 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.connection;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -13,22 +14,24 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.data.DataManager;
+import fr.rsommerard.privacyaware.peer.Peer;
+
 public class ActiveThread extends Thread implements Runnable {
 
     private final String TAG = ActiveThread.class.getSimpleName();
 
-    private InetAddress mLocalAddress;
-    private Handler mHandler;
+    private ConnectionManager mConnectionManager;
     private Peer mPeer;
     private DataManager mDataManager;
 
-    public ActiveThread(Peer peer, InetAddress localAddress, Handler handler) {
+    public ActiveThread(ConnectionManager connectionManager, Peer peer) {
         super();
 
         mPeer = peer;
-        mHandler = handler;
-        mLocalAddress = localAddress;
         mDataManager = DataManager.getInstance();
+        mConnectionManager = connectionManager;
     }
 
     @Override
@@ -40,15 +43,16 @@ public class ActiveThread extends Thread implements Runnable {
         Socket socket = new Socket();
 
         try {
-            Log.d(TAG, "Connect to: " + mLocalAddress + ":" + mPeer.getPort());
+            Log.d(TAG, "Connect to: " + mPeer.getLocalAddress() + ":" + mPeer.getPort());
 
+            // TODO: try to decrease sleep time
             try {
                 sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            socket.connect(new InetSocketAddress(mLocalAddress, mPeer.getPort()), 5000);
+            socket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 5000);
 
             OutputStream outputStream = socket.getOutputStream();
 
@@ -61,10 +65,7 @@ public class ActiveThread extends Thread implements Runnable {
 
             socket.close();
 
-            Message handlerMessage = new Message();
-            handlerMessage.obj = "FINISH";
-            mHandler.sendMessage(handlerMessage);
-
+            mConnectionManager.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
         }

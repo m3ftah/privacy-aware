@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.connection;
 
 import android.util.Log;
 
@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.data.DataManager;
 
 public class PassiveThread extends Thread implements Runnable {
 
