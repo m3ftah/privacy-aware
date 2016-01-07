@@ -52,6 +52,7 @@ public class Peer {
         return mPort;
     }
 
+    @Override
     public String toString() {
         return mName;
     }
