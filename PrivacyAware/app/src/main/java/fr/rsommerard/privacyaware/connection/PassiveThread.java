@@ -12,13 +12,15 @@ import fr.rsommerard.privacyaware.data.DataManager;
 
 public class PassiveThread extends Thread implements Runnable {
 
-    private final String TAG = PassiveThread.class.getSimpleName();
+    private final String TAG = "PAPT";
 
     private ServerSocket mServerSocket;
     private DataManager mDataManager;
+    private Socket mSocket;
 
     public PassiveThread(ServerSocket serverSocket) {
         super();
+        Log.i(TAG, "PassiveThread()");
 
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance();
@@ -27,25 +29,42 @@ public class PassiveThread extends Thread implements Runnable {
     @Override
     public void run() {
         super.run();
+        Log.i(TAG, "run()");
 
         try {
             while(true) {
-                Socket socket = mServerSocket.accept();
+                mSocket = mServerSocket.accept();
 
-                InputStream inputStream = socket.getInputStream();
+                InputStream inputStream = mSocket.getInputStream();
                 byte[] buffer = new byte[1024];
 
                 int bytes = inputStream.read(buffer);
+
+                if (bytes == -1) {
+                    mSocket.close();
+                    continue;
+                }
 
                 Data data = new Data(new String(buffer, 0, bytes));
                 mDataManager.addData(data);
 
                 Log.d(TAG, "Received \"" + data.getContent() + "\"");
 
-                socket.close();
+                mSocket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            if (mSocket != null) {
+                if (mSocket.isConnected()) {
+                    try {
+                        mSocket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 }

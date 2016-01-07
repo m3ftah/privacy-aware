@@ -10,7 +10,7 @@ import android.util.Log;
 
 public class WifiDirectManager {
 
-    private final String TAG = WifiDirectManager.class.getSimpleName();
+    private final String TAG = "PAWDM";
 
     private static WifiDirectManager sInstance;
 
@@ -19,6 +19,8 @@ public class WifiDirectManager {
     private IntentFilter mWifiIntentFilter;
     private WifiP2pDevice mOwnDevice;
     private WifiDirectBroadcastReceiver mWifiDirectBroadcastReceiver;
+
+    private Context mContext;
 
     public static WifiDirectManager getInstance(Context context) {
         if (sInstance == null) {
@@ -29,18 +31,32 @@ public class WifiDirectManager {
     }
 
     private WifiDirectManager(Context context) {
+        Log.i(TAG, "WifiDirectManager()");
+
+        mContext = context;
+
         mWifiIntentFilter = new IntentFilter();
         mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
 
         mWifiDirectBroadcastReceiver = new WifiDirectBroadcastReceiver();
-        context.registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
+        mContext.registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
+    }
+
+    public void purge() {
+        Log.i(TAG, "purge()");
+
+        mContext.unregisterReceiver(mWifiDirectBroadcastReceiver);
     }
 
     public boolean isWifiDirectEnabled() {
+        Log.i(TAG, "isWifiDirectEnabled()");
+
         return mWifiDirectEnabled;
     }
 
     public WifiP2pDevice getOwnDevice() {
+        Log.i(TAG, "getOwnDevice()");
+
         return mOwnDevice;
     }
 
@@ -48,8 +64,9 @@ public class WifiDirectManager {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "onReceive()");
+
             String action = intent.getAction();
-            Log.d(TAG, action);
 
             if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 int wifiState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,

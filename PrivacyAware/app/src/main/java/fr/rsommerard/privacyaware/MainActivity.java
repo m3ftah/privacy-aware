@@ -1,20 +1,20 @@
 package fr.rsommerard.privacyaware;
 
-import android.net.nsd.NsdManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.connection.ServiceDiscoveryManager;
@@ -23,7 +23,9 @@ import fr.rsommerard.privacyaware.peer.PeerManager;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final String TAG = MainActivity.class.getSimpleName();
+    public final String TAG = "PAMA";
+
+    private final int TIMEOUT = 3000;
 
     private ArrayAdapter<Peer> mPeersAdapter;
     private Button mProcessButton;
@@ -31,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Peer> mPeersToDisplay;
     private PeerManager mPeerManager;
     private ConnectionManager mConnectionManager;
-    private Timer mTimer;
     private ServiceDiscoveryManager mServiceDiscoveryManager;
+    private ScheduledExecutorService mExecutor;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -76,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
         mConnectionManager = ConnectionManager.getInstance(this);
         mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this);
 
-        mTimer = new Timer();
-
         mPeersToDisplay = new ArrayList<>();
         mPeersAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, mPeersToDisplay);
@@ -95,10 +95,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void connectToPeer() {
-        mConnectionManager.connect(mPeerManager.getPeer());
+        Log.i(TAG, "connectToPeer()");
+
+        Peer peer = mPeerManager.getPeer();
+
+        if (peer == null) {
+            Log.d(TAG, "peer == null");
+            return;
+        }
+
+        mConnectionManager.connect(peer);
     }
 
     private void showPeerDetails(Peer peer) {
+        Log.i(TAG, "showPeerDetails()");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         String peerDetails = "Name: " + peer.getName();
@@ -118,45 +129,51 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        mServiceDiscoveryManager.stopDiscovery();
         mConnectionManager.disconnect();
+        mConnectionManager.purge();
+        mPeerManager.purge();
+        mExecutor.shutdown();
     }
 
     private void stopProcess() {
+        Log.i(TAG, "stopProcess()");
+
         mPeersToDisplay.clear();
         mPeersAdapter.notifyDataSetChanged();
 
         mServiceDiscoveryManager.stopDiscovery();
         mConnectionManager.disconnect();
 
-        setStartProcessOnClick();
+        mExecutor.shutdown();
 
-        Toast.makeText(this, "Process stopped", Toast.LENGTH_SHORT).show();
+        setStartProcessOnClick();
     }
 
     private void startProcess() {
+        Log.i(TAG, "startProcess()");
+
         mPeersAdapter.notifyDataSetChanged();
 
-        mTimer.scheduleAtFixedRate(new NotifyPeersAdapterTimerTask(), 3000, 3000);
+        mExecutor = Executors.newSingleThreadScheduledExecutor();
+        mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                //Log.i(TAG, "run()");
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPeersToDisplay.clear();
+                        mPeersToDisplay.addAll(mPeerManager.getPeers());
+                        mPeersAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }, TIMEOUT, TIMEOUT, TimeUnit.MILLISECONDS);
 
         mServiceDiscoveryManager.startDiscovery();
 
         setStopProcessOnClick();
-
-        Toast.makeText(this, "Process started", Toast.LENGTH_SHORT).show();
-    }
-
-    private class NotifyPeersAdapterTimerTask extends TimerTask {
-
-        @Override
-        public void run() {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mPeersToDisplay.clear();
-                    mPeersToDisplay.addAll(mPeerManager.getPeers());
-                    mPeersAdapter.notifyDataSetChanged();
-                }
-            });
-        }
     }
 }

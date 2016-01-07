@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
@@ -15,12 +14,11 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-import fr.rsommerard.privacyaware.data.Data;
 import fr.rsommerard.privacyaware.peer.Peer;
 
 public class ConnectionManager {
 
-    private final String TAG = ConnectionManager.class.getSimpleName();
+    private final String TAG = "PACM";
 
     private static ConnectionManager sInstance;
 
@@ -29,11 +27,12 @@ public class ConnectionManager {
         DISCONNECTED
     }
 
+    private ConnectionThread mConnectionThread;
     private ActiveThread mActiveThread;
+    private Context mContext;
     private IntentFilter mIntentFilter;
     private ConnectionBroadcastReceiver mConnectionBroadcastReceiver;
     private ConnectionState mState;
-    private PassiveThread mPassiveThread;
     private Peer mPeer;
     private ServerSocket mServerSocket;
     private WifiDirectManager mWifiDirectManager;
@@ -49,38 +48,59 @@ public class ConnectionManager {
     }
 
     private ConnectionManager(Context context) {
+        Log.i(TAG, "ConnectionManager()");
+
+        mContext = context;
+
         mState = ConnectionState.DISCONNECTED;
 
-        mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-        mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
+        mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
+        mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), null);
 
-        mWifiDirectManager = WifiDirectManager.getInstance(context);
+        mWifiDirectManager = WifiDirectManager.getInstance(mContext);
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
         mConnectionBroadcastReceiver = new ConnectionBroadcastReceiver();
-        context.registerReceiver(mConnectionBroadcastReceiver, mIntentFilter);
+        mContext.registerReceiver(mConnectionBroadcastReceiver, mIntentFilter);
 
         try {
             mServerSocket = new ServerSocket(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        mPassiveThread = new PassiveThread(mServerSocket);
-        mPassiveThread.start();
+    public void purge() {
+        Log.i(TAG, "purge()");
+
+        mContext.unregisterReceiver(mConnectionBroadcastReceiver);
+        mPassiveThread.interrupt();
+        if (mActiveThread != null) {
+            mActiveThread.interrupt();
+        }
+        mWifiDirectManager.purge();
     }
 
     public int getPassiveThreadPort() {
+        Log.i(TAG, "getPassiveThreadPort()");
+
         return mServerSocket.getLocalPort();
     }
 
-    // TODO: What if 2 connection request at the same time (if already connected)
     public void connect(Peer peer) {
+        Log.i(TAG, "connect()");
+
+        if (isConnectedOrConnecting()) {
+            Log.d(TAG, "isConnected() == true");
+            return;
+        }
+
         WifiP2pConfig wifiP2pConfig = new WifiP2pConfig();
         wifiP2pConfig.deviceAddress = peer.getAddress();
         wifiP2pConfig.wps.setup = WpsInfo.PBC;
+        wifiP2pConfig.groupOwnerIntent = 0;
 
         mPeer = peer;
 
@@ -88,6 +108,8 @@ public class ConnectionManager {
     }
 
     public void disconnect() {
+        Log.i(TAG, "disconnect()");
+
         if (mActiveThread != null) {
             mActiveThread.interrupt();
             mActiveThread = null;
@@ -95,23 +117,25 @@ public class ConnectionManager {
 
         mPeer = null;
 
-        // TODO: cancel or remove or both
         mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
         mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+
+        mState = ConnectionState.DISCONNECTED;
     }
 
-    private boolean isGroupOwner() {
-        WifiP2pDevice ownDevice = mWifiDirectManager.getOwnDevice();
+    private boolean isConnectedOrConnecting() {
+        //Log.i(TAG, "isConnected()");
 
-        return ownDevice != null && ownDevice.isGroupOwner();
+        return mState == ConnectionState.CONNECTED;
     }
 
     private class ConnectionBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "onReceive()");
+
             String action = intent.getAction();
-            Log.d(TAG, action);
 
             if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
                 WifiP2pInfo wifiP2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
@@ -123,19 +147,18 @@ public class ConnectionManager {
                     mState = ConnectionState.CONNECTED;
                     Log.d(TAG, "Devices connected");
 
-                    // TODO: fix the fact that group owner is randomly affected
-                    // TODO: Fix null exception if group owner is the request initiator
-                    if (isGroupOwner()) {
-                        return;
+                    if (mPeer != null)
+
+                    if (wifiP2pInfo.isGroupOwner) {
+
                     }
 
-                    mPeer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
-
-                    mActiveThread = new ActiveThread(ConnectionManager.this, mPeer);
-                    mActiveThread.start();
+                    mConnectionThread = new ConnectionThread(mServerSocket, mPeer, );
+                    mConnectionThread.start();
                 } else {
-                    mState = ConnectionState.DISCONNECTED;
                     Log.d(TAG, "Devices disconnected");
+
+                    disconnect();
                 }
             }
         }

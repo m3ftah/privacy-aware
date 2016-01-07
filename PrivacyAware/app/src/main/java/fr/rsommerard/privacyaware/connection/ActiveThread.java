@@ -20,7 +20,7 @@ import fr.rsommerard.privacyaware.peer.Peer;
 
 public class ActiveThread extends Thread implements Runnable {
 
-    private final String TAG = ActiveThread.class.getSimpleName();
+    private final String TAG = "PAAT";
 
     private ConnectionManager mConnectionManager;
     private Peer mPeer;
@@ -28,6 +28,7 @@ public class ActiveThread extends Thread implements Runnable {
 
     public ActiveThread(ConnectionManager connectionManager, Peer peer) {
         super();
+        Log.i(TAG, "ActiveThread()");
 
         mPeer = peer;
         mDataManager = DataManager.getInstance();
@@ -37,8 +38,11 @@ public class ActiveThread extends Thread implements Runnable {
     @Override
     public void run() {
         super.run();
-
         Log.i(TAG, "run()");
+
+        if (!mDataManager.hasDatas()) {
+            return;
+        }
 
         Socket socket = new Socket();
 
@@ -52,6 +56,7 @@ public class ActiveThread extends Thread implements Runnable {
                 e.printStackTrace();
             }
 
+            socket.bind(null);
             socket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 5000);
 
             OutputStream outputStream = socket.getOutputStream();
@@ -66,6 +71,7 @@ public class ActiveThread extends Thread implements Runnable {
             socket.close();
 
             mConnectionManager.disconnect();
+            mDataManager.removeData(data);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -79,6 +85,8 @@ public class ActiveThread extends Thread implements Runnable {
                     }
                 }
             }
+
+            mConnectionManager.disconnect();
         }
     }
 }
