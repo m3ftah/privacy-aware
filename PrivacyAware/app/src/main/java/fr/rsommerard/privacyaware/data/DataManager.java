@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class DataManager {
 
-    private final String TAG = DataManager.class.getSimpleName();
+    private final String TAG = "PADM";
 
     private static DataManager sInstance;
 
@@ -24,6 +24,8 @@ public class DataManager {
     }
 
     private DataManager() {
+        Log.i(TAG, "DataManager()");
+
         mDatas = new ArrayList<>();
         mRand = new Random();
 
@@ -31,14 +33,21 @@ public class DataManager {
     }
 
     private void populateDatas() {
-        mDatas.add(new Data("1"));
-        mDatas.add(new Data("2"));
-        mDatas.add(new Data("3"));
-        mDatas.add(new Data("4"));
-        mDatas.add(new Data("5"));
+        Log.i(TAG, "populateDatas()");
+
+        Random rand = new Random();
+
+        int nbData = rand.nextInt(5);
+        for (int i = 0; i < nbData; i++) {
+            mDatas.add(new Data(String.valueOf(rand.nextInt(1000))));
+        }
+
+        Log.d(TAG, mDatas.toString());
     }
 
     public Data getData() {
+        Log.i(TAG, "getData()");
+
         if (mDatas.isEmpty()) {
             return null;
         }
@@ -46,11 +55,23 @@ public class DataManager {
         return mDatas.get(mRand.nextInt(mDatas.size()));
     }
 
+    public void removeData(Data data) {
+        Log.i(TAG, "removeData()");
+
+        mDatas.remove(data);
+
+        Log.d(TAG, mDatas.toString());
+    }
+
     public List<Data> getDatas() {
+        Log.i(TAG, "getDatas()");
+
         return mDatas;
     }
 
     public void addData(Data data) {
+        Log.i(TAG, "addData()");
+
         if (mDatas.contains(data)) {
             return;
         }
@@ -58,5 +79,9 @@ public class DataManager {
         mDatas.add(data);
 
         Log.d(TAG, mDatas.toString());
+    }
+
+    public boolean hasDatas() {
+        return !mDatas.isEmpty();
     }
 }
