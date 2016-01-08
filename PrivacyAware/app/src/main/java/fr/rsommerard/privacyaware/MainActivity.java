@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.connection.ServiceDiscoveryManager;
+import fr.rsommerard.privacyaware.connection.WifiDirectManager;
 import fr.rsommerard.privacyaware.peer.Peer;
 import fr.rsommerard.privacyaware.peer.PeerManager;
 
@@ -25,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     public final String TAG = "PAMA";
 
-    private final int TIMEOUT = 3000;
+    private final int DELAY = 3000;
 
     private ArrayAdapter<Peer> mPeersAdapter;
     private Button mProcessButton;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ConnectionManager mConnectionManager;
     private ServiceDiscoveryManager mServiceDiscoveryManager;
     private ScheduledExecutorService mExecutor;
+    private WifiDirectManager mWifiDirectManager;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -77,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         mPeerManager = PeerManager.getInstance();
         mConnectionManager = ConnectionManager.getInstance(this);
         mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this);
+        mWifiDirectManager = WifiDirectManager.getInstance(this);
 
         mPeersToDisplay = new ArrayList<>();
         mPeersAdapter = new ArrayAdapter<>(this,
@@ -97,12 +100,12 @@ public class MainActivity extends AppCompatActivity {
     private void connectToPeer() {
         Log.i(TAG, "connectToPeer()");
 
-        Peer peer = mPeerManager.getPeer();
-
-        if (peer == null) {
-            Log.d(TAG, "peer == null");
+        if (!mPeerManager.hasPeers()) {
+            Log.d(TAG, "No peers available");
             return;
         }
+
+        Peer peer = mPeerManager.getPeer();
 
         mConnectionManager.connect(peer);
     }
@@ -130,9 +133,12 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         mServiceDiscoveryManager.stopDiscovery();
+
         mConnectionManager.disconnect();
-        mConnectionManager.purge();
-        mPeerManager.purge();
+        mConnectionManager.destroy();
+
+        mPeerManager.destroy();
+
         mExecutor.shutdown();
     }
 
@@ -143,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
         mPeersAdapter.notifyDataSetChanged();
 
         mServiceDiscoveryManager.stopDiscovery();
+
         mConnectionManager.disconnect();
 
         mExecutor.shutdown();
@@ -170,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, TIMEOUT, TIMEOUT, TimeUnit.MILLISECONDS);
+        }, DELAY, DELAY, TimeUnit.MILLISECONDS);
 
         mServiceDiscoveryManager.startDiscovery();
 

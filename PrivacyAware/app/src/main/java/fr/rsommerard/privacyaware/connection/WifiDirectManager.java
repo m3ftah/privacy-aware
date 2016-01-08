@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
@@ -17,7 +16,6 @@ public class WifiDirectManager {
     private boolean mWifiDirectEnabled;
 
     private IntentFilter mWifiIntentFilter;
-    private WifiP2pDevice mOwnDevice;
     private WifiDirectBroadcastReceiver mWifiDirectBroadcastReceiver;
 
     private Context mContext;
@@ -54,12 +52,6 @@ public class WifiDirectManager {
         return mWifiDirectEnabled;
     }
 
-    public WifiP2pDevice getOwnDevice() {
-        Log.i(TAG, "getOwnDevice()");
-
-        return mOwnDevice;
-    }
-
     private class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
         @Override
@@ -73,10 +65,6 @@ public class WifiDirectManager {
                         WifiP2pManager.WIFI_P2P_STATE_DISABLED);
 
                 mWifiDirectEnabled = (wifiState == WifiP2pManager.WIFI_P2P_STATE_ENABLED);
-            }
-
-            if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
-                mOwnDevice = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
             }
         }
     }

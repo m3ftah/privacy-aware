@@ -17,7 +17,7 @@ public class PeerManager {
 
     private static PeerManager sInstance;
 
-    private final int TIMEOUT = 61000;
+    private final int DELAY = 61000;
 
     private List<Peer> mPeers;
     private Random mRand;
@@ -45,11 +45,11 @@ public class PeerManager {
 
                 mPeers.clear();
             }
-        }, 0, TIMEOUT, TimeUnit.MILLISECONDS);
+        }, 0, DELAY, TimeUnit.MILLISECONDS);
     }
 
-    public void purge() {
-        Log.i(TAG, "purge()");
+    public void destroy() {
+        Log.i(TAG, "destroy()");
 
         mExecutor.shutdown();
     }
@@ -80,6 +80,10 @@ public class PeerManager {
         //Log.i(TAG, "getPeers()");
 
         return mPeers;
+    }
+
+    public boolean hasPeers() {
+        return !mPeers.isEmpty();
     }
 
     public void addPeer(Peer peer) {

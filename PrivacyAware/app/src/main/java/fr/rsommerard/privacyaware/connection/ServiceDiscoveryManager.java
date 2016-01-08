@@ -20,7 +20,7 @@ public class ServiceDiscoveryManager {
 
     private final String TAG = "PASDM";
 
-    private final int TIMEOUT = 11000;
+    private final int DELAY = 11000;
 
     private final String SERVICE_NAME = "_rsp2p";
     private final String SERVICE_TYPE = "_presence._tcp";
@@ -75,7 +75,7 @@ public class ServiceDiscoveryManager {
 
                 mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
             }
-        }, 0, TIMEOUT, TimeUnit.MILLISECONDS);
+        }, 0, DELAY, TimeUnit.MILLISECONDS);
     }
 
     public void stopDiscovery() {
@@ -86,25 +86,31 @@ public class ServiceDiscoveryManager {
         }
     }
 
+    private boolean isValidService(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
+        if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
+            return false;
+        }
+
+        if (!fullDomainName.contains(SERVICE_NAME)) {
+            return false;
+        }
+
+        if (srcDevice.deviceName.isEmpty()) {
+            return false;
+        }
+
+        return true;
+    }
+
     private class SetDnsSdTxtRecordListener implements WifiP2pManager.DnsSdTxtRecordListener {
 
         @Override
         public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
             //Log.i(TAG, "onDnsSdTxtRecordAvailable()");
 
-            if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
-                return;
+            if (isValidService(fullDomainName, txtRecordMap, srcDevice)) {
+                mPeerManager.addPeer(new Peer(srcDevice, txtRecordMap.get("port")));
             }
-
-            if (!fullDomainName.contains(SERVICE_NAME)) {
-                return;
-            }
-
-            if (srcDevice.deviceName.isEmpty()) {
-                return;
-            }
-
-            mPeerManager.addPeer(new Peer(srcDevice, txtRecordMap.get("port")));
         }
     }
 }

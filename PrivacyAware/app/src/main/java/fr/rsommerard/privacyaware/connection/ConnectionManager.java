@@ -22,22 +22,19 @@ public class ConnectionManager {
 
     private static ConnectionManager sInstance;
 
+    private Context mContext;
+    private IntentFilter mIntentFilter;
+    private ConnectionBroadcastReceiver mConnectionBroadcastReceiver;
+    private ServerSocket mServerSocket;
+    private WifiP2pManager mWifiP2pManager;
+    private WifiP2pManager.Channel mWifiP2pChannel;
+    private Peer mPeer;
+    private ConnectionState mState;
+
     private enum ConnectionState {
         CONNECTED,
         DISCONNECTED
     }
-
-    private ConnectionThread mConnectionThread;
-    private ActiveThread mActiveThread;
-    private Context mContext;
-    private IntentFilter mIntentFilter;
-    private ConnectionBroadcastReceiver mConnectionBroadcastReceiver;
-    private ConnectionState mState;
-    private Peer mPeer;
-    private ServerSocket mServerSocket;
-    private WifiDirectManager mWifiDirectManager;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
 
     public static ConnectionManager getInstance(Context context) {
         if (sInstance == null) {
@@ -57,8 +54,6 @@ public class ConnectionManager {
         mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), null);
 
-        mWifiDirectManager = WifiDirectManager.getInstance(mContext);
-
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 
@@ -72,27 +67,20 @@ public class ConnectionManager {
         }
     }
 
-    public void purge() {
-        Log.i(TAG, "purge()");
-
-        mContext.unregisterReceiver(mConnectionBroadcastReceiver);
-        mPassiveThread.interrupt();
-        if (mActiveThread != null) {
-            mActiveThread.interrupt();
-        }
-        mWifiDirectManager.purge();
-    }
-
     public int getPassiveThreadPort() {
         Log.i(TAG, "getPassiveThreadPort()");
 
         return mServerSocket.getLocalPort();
     }
 
+    private boolean isConnected() {
+        return mState == ConnectionState.CONNECTED;
+    }
+
     public void connect(Peer peer) {
         Log.i(TAG, "connect()");
 
-        if (isConnectedOrConnecting()) {
+        if (isConnected()) {
             Log.d(TAG, "isConnected() == true");
             return;
         }
@@ -110,11 +98,6 @@ public class ConnectionManager {
     public void disconnect() {
         Log.i(TAG, "disconnect()");
 
-        if (mActiveThread != null) {
-            mActiveThread.interrupt();
-            mActiveThread = null;
-        }
-
         mPeer = null;
 
         mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
@@ -123,10 +106,10 @@ public class ConnectionManager {
         mState = ConnectionState.DISCONNECTED;
     }
 
-    private boolean isConnectedOrConnecting() {
-        //Log.i(TAG, "isConnected()");
+    public void destroy() {
+        Log.i(TAG, "destroy()");
 
-        return mState == ConnectionState.CONNECTED;
+        mContext.unregisterReceiver(mConnectionBroadcastReceiver);
     }
 
     private class ConnectionBroadcastReceiver extends BroadcastReceiver {
@@ -144,17 +127,13 @@ public class ConnectionManager {
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 
                 if (networkInfo.isConnected()) {
-                    mState = ConnectionState.CONNECTED;
                     Log.d(TAG, "Devices connected");
 
-                    if (mPeer != null)
+                    mState = ConnectionState.CONNECTED;
 
                     if (wifiP2pInfo.isGroupOwner) {
-
+                        //disconnect();
                     }
-
-                    mConnectionThread = new ConnectionThread(mServerSocket, mPeer, );
-                    mConnectionThread.start();
                 } else {
                     Log.d(TAG, "Devices disconnected");
 
