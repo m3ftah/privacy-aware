@@ -8,12 +8,12 @@ import java.util.Random;
 
 public class DataManager {
 
-    private final String TAG = "PADM";
+    private static final String TAG = "PADM";
 
     private static DataManager sInstance;
 
-    private List<Data> mDatas;
-    private Random mRand;
+    private final List<Data> mDatas;
+    private final Random mRand;
 
     public static DataManager getInstance() {
         if (sInstance == null) {
@@ -35,11 +35,12 @@ public class DataManager {
     private void populateDatas() {
         Log.i(TAG, "populateDatas()");
 
-        Random rand = new Random();
+        int nbData = mRand.nextInt(4) + 1; // 1 to 5
 
-        int nbData = rand.nextInt(5);
+        Log.d(TAG, "nbDatas: " + nbData);
+
         for (int i = 0; i < nbData; i++) {
-            mDatas.add(new Data(String.valueOf(rand.nextInt(1000))));
+            mDatas.add(new Data(String.valueOf(mRand.nextInt(1000))));
         }
 
         Log.d(TAG, mDatas.toString());
@@ -55,8 +56,8 @@ public class DataManager {
         return mDatas.get(mRand.nextInt(mDatas.size()));
     }
 
-    public void removeData(Data data) {
-        Log.i(TAG, "removeData()");
+    public void removeData(final Data data) {
+        Log.i(TAG, "removeData(Data data)");
 
         mDatas.remove(data);
 
@@ -69,8 +70,8 @@ public class DataManager {
         return mDatas;
     }
 
-    public void addData(Data data) {
-        Log.i(TAG, "addData()");
+    public void addData(final Data data) {
+        Log.i(TAG, "addData(Data data)");
 
         if (mDatas.contains(data)) {
             return;

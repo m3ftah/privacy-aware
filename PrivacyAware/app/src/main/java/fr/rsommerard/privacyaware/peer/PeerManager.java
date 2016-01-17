@@ -5,22 +5,21 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class PeerManager {
 
-    private final String TAG = "PAPM";
+    private static final String TAG = "PAPM";
 
     private static PeerManager sInstance;
 
-    private final int DELAY = 61000;
+    private static final int DELAY = 181000;
 
-    private List<Peer> mPeers;
-    private Random mRand;
+    private final List<Peer> mPeers;
+    private final Random mRand;
+
     private ScheduledExecutorService mExecutor;
 
     public static PeerManager getInstance() {
@@ -37,21 +36,35 @@ public class PeerManager {
         mPeers = new ArrayList<>();
         mRand = new Random();
 
+        startCleaningExecutor();
+    }
+
+    public void startCleaningExecutor() {
+        if (mExecutor != null) {
+            return;
+        }
+
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "run()");
 
                 mPeers.clear();
             }
         }, 0, DELAY, TimeUnit.MILLISECONDS);
     }
 
+    public void stopCleaningExecutor() {
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
+    }
+
     public void destroy() {
         Log.i(TAG, "destroy()");
 
-        mExecutor.shutdown();
+        stopCleaningExecutor();
     }
 
     public Peer getPeer() {
@@ -64,10 +77,14 @@ public class PeerManager {
         return mPeers.get(mRand.nextInt(mPeers.size()));
     }
 
-    public Peer getPeer(String address) {
+    public Peer getPeer(final String address) {
         Log.i(TAG, "getPeer(String name)");
 
+        Log.d(TAG, address);
+        Log.d(TAG, mPeers.toString());
+
         for (Peer peer : mPeers) {
+            Log.d(TAG, "\"" + peer.getAddress() + "\".equals(\"" + address + "\")");
             if (peer.getAddress().equals(address)) {
                 return peer;
             }
@@ -86,8 +103,8 @@ public class PeerManager {
         return !mPeers.isEmpty();
     }
 
-    public void addPeer(Peer peer) {
-        //Log.i(TAG, "addPeer()");
+    public void addPeer(final Peer peer) {
+        //Log.i(TAG, "addPeer(Peer peer)");
 
         if (mPeers.contains(peer)) {
             return;

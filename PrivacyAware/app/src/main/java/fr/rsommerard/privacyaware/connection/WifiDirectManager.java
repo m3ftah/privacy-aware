@@ -9,18 +9,18 @@ import android.util.Log;
 
 public class WifiDirectManager {
 
-    private final String TAG = "PAWDM";
+    private static final String TAG = "PAWDM";
 
     private static WifiDirectManager sInstance;
 
     private boolean mWifiDirectEnabled;
 
-    private IntentFilter mWifiIntentFilter;
-    private WifiDirectBroadcastReceiver mWifiDirectBroadcastReceiver;
+    private final IntentFilter mWifiIntentFilter;
+    private final WifiDirectBroadcastReceiver mWifiDirectBroadcastReceiver;
 
-    private Context mContext;
+    private final Context mContext;
 
-    public static WifiDirectManager getInstance(Context context) {
+    public static WifiDirectManager getInstance(final Context context) {
         if (sInstance == null) {
             sInstance = new WifiDirectManager(context);
         }
@@ -28,7 +28,7 @@ public class WifiDirectManager {
         return sInstance;
     }
 
-    private WifiDirectManager(Context context) {
+    private WifiDirectManager(final Context context) {
         Log.i(TAG, "WifiDirectManager()");
 
         mContext = context;
@@ -55,7 +55,7 @@ public class WifiDirectManager {
     private class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(final Context context, final Intent intent) {
             Log.i(TAG, "onReceive()");
 
             String action = intent.getAction();

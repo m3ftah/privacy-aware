@@ -24,9 +24,9 @@ import fr.rsommerard.privacyaware.peer.PeerManager;
 
 public class MainActivity extends AppCompatActivity {
 
-    public final String TAG = "PAMA";
+    public static final String TAG = "PAMA";
 
-    private final int DELAY = 3000;
+    private static final int DELAY = 3000;
 
     private ArrayAdapter<Peer> mPeersAdapter;
     private Button mProcessButton;
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
         mPeerManager = PeerManager.getInstance();
         mConnectionManager = ConnectionManager.getInstance(this);
-        mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this);
+        mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this, String.valueOf(mConnectionManager.getPassiveThreadPort()));
         mWifiDirectManager = WifiDirectManager.getInstance(this);
 
         mPeersToDisplay = new ArrayList<>();
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
         peersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Peer peer = (Peer) parent.getItemAtPosition(position);
+                final Peer peer = (Peer) parent.getItemAtPosition(position);
                 showPeerDetails(peer);
             }
         });
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         mConnectionManager.connect(peer);
     }
 
-    private void showPeerDetails(Peer peer) {
+    private void showPeerDetails(final Peer peer) {
         Log.i(TAG, "showPeerDetails()");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

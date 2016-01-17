@@ -6,24 +6,24 @@ import java.net.InetAddress;
 
 public class Peer {
 
-    private String mName;
-    private String mAddress;
+    private final String mName;
+    private final String mAddress;
     private InetAddress mLocalAddress;
-    private int mPort;
+    private final int mPort;
 
-    public Peer(WifiP2pDevice peer, int port) {
+    public Peer(final WifiP2pDevice peer, final int port) {
         mName = peer.deviceName;
         mAddress = peer.deviceAddress;
         mPort = port;
     }
 
-    public Peer(WifiP2pDevice peer, String port) {
+    public Peer(final WifiP2pDevice peer, final String port) {
         this(peer, Integer.parseInt(port));
     }
 
     @Override
-    public boolean equals(Object obj) {
-        Peer peer = (Peer) obj;
+    public boolean equals(final Object obj) {
+        final Peer peer = (Peer) obj;
 
         if (peer.getAddress().equals(mAddress)) {
             return true;
@@ -36,7 +36,7 @@ public class Peer {
         return mLocalAddress;
     }
 
-    public void setLocalAddress(InetAddress localAddress) {
+    public void setLocalAddress(final InetAddress localAddress) {
         mLocalAddress = localAddress;
     }
 
@@ -56,5 +56,4 @@ public class Peer {
     public String toString() {
         return mName;
     }
-
 }

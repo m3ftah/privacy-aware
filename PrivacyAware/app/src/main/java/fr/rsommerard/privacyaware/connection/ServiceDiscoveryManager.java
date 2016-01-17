@@ -18,50 +18,47 @@ import fr.rsommerard.privacyaware.peer.PeerManager;
 
 public class ServiceDiscoveryManager {
 
-    private final String TAG = "PASDM";
+    private static final String TAG = "PASDM";
 
-    private final int DELAY = 11000;
+    private static final int DELAY = 17000;
 
-    private final String SERVICE_NAME = "_rsp2p";
-    private final String SERVICE_TYPE = "_presence._tcp";
+    private static final String SERVICE_NAME = "_rsp2p";
+    private static final String SERVICE_TYPE = "_presence._tcp";
 
     private static ServiceDiscoveryManager sInstance;
 
     private ScheduledExecutorService mExecutor;
-    private PeerManager mPeerManager;
-    private WifiP2pDnsSdServiceInfo mWifiP2pDnsSdServiceInfo;
-    private WifiP2pDnsSdServiceRequest mWifiP2pDnsSdServiceRequest;
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
 
-    public static ServiceDiscoveryManager getInstance(Context context) {
+    private final PeerManager mPeerManager;
+    private final WifiP2pDnsSdServiceInfo mWifiP2pDnsSdServiceInfo;
+    private final WifiP2pDnsSdServiceRequest mWifiP2pDnsSdServiceRequest;
+    private final WifiP2pManager mWifiP2pManager;
+    private final WifiP2pManager.Channel mWifiP2pChannel;
+
+    public static ServiceDiscoveryManager getInstance(final Context context, final String port) {
         if (sInstance == null) {
-            sInstance = new ServiceDiscoveryManager(context);
+            sInstance = new ServiceDiscoveryManager(context, port);
         }
 
         return sInstance;
     }
 
-    private ServiceDiscoveryManager(Context context) {
-        Log.i(TAG, "ServiceDiscoveryManager()");
+    private ServiceDiscoveryManager(final Context context, final String port) {
+        Log.i(TAG, "ServiceDiscoveryManager(Context context)");
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
 
         mPeerManager = PeerManager.getInstance();
 
-        ConnectionManager connectionManager = ConnectionManager.getInstance(context);
-
         Map<String, String> record = new HashMap<>();
-        record.put("port", String.valueOf(connectionManager.getPassiveThreadPort()));
+        record.put("port", port);
 
         mWifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
         mWifiP2pManager.addLocalService(mWifiP2pChannel, mWifiP2pDnsSdServiceInfo, null);
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, new SetDnsSdTxtRecordListener());
         mWifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
         mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mWifiP2pDnsSdServiceRequest, null);
-
-
     }
 
     public void startDiscovery() {
@@ -86,7 +83,7 @@ public class ServiceDiscoveryManager {
         }
     }
 
-    private boolean isValidService(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
+    private boolean isValidService(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
         if (txtRecordMap.isEmpty() || !txtRecordMap.containsKey("port")) {
             return false;
         }
@@ -95,7 +92,11 @@ public class ServiceDiscoveryManager {
             return false;
         }
 
-        if (srcDevice.deviceName.isEmpty()) {
+        if (srcDevice.deviceAddress == null || srcDevice.deviceAddress.isEmpty()) {
+            return false;
+        }
+
+        if (srcDevice.deviceName == null || srcDevice.deviceName.isEmpty()) {
             return false;
         }
 
@@ -105,8 +106,8 @@ public class ServiceDiscoveryManager {
     private class SetDnsSdTxtRecordListener implements WifiP2pManager.DnsSdTxtRecordListener {
 
         @Override
-        public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
-            //Log.i(TAG, "onDnsSdTxtRecordAvailable()");
+        public void onDnsSdTxtRecordAvailable(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
+            //Log.i(TAG, "onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice)");
 
             if (isValidService(fullDomainName, txtRecordMap, srcDevice)) {
                 mPeerManager.addPeer(new Peer(srcDevice, txtRecordMap.get("port")));

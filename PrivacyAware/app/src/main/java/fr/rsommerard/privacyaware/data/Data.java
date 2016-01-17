@@ -2,9 +2,9 @@ package fr.rsommerard.privacyaware.data;
 
 public class Data {
 
-    private String mContent;
+    private final String mContent;
 
-    public Data(String content) {
+    public Data(final String content) {
         mContent = content;
     }
 
@@ -13,7 +13,7 @@ public class Data {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         Data data = (Data) obj;
 
         if (data.getContent().equals(mContent)) {
