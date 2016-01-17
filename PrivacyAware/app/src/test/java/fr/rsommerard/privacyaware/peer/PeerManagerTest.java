@@ -78,6 +78,15 @@ public class PeerManagerTest {
     }
 
     @Test
+    public void testGetPeerNullNamedWithAddress() {
+        Peer peer = createNullNamedPeer();
+
+        sPeerManager.addPeer(peer);
+
+        assertEquals("should return the same peer", peer, sPeerManager.getPeer(peer.getAddress()));
+    }
+
+    @Test
     public void testGetPeerWithAddress() {
         Peer peer = createPeer3();
 
@@ -133,5 +142,13 @@ public class PeerManagerTest {
         device.deviceName = "Android_ea94";
 
         return new Peer(device, 8920);
+    }
+
+    private Peer createNullNamedPeer() {
+        WifiP2pDevice device = mock(WifiP2pDevice.class);
+        device.deviceAddress = "7e:27:57:ae:57:ce";
+        device.deviceName = null;
+
+        return new Peer(device, 12455);
     }
 }
