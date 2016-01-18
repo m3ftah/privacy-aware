@@ -104,7 +104,6 @@ public class PeerManagerTest {
         assertTrue("should be true", sPeerManager.hasPeers());
     }
 
-    @Ignore
     @Test
     public void testCleaningPeers() {
         Peer peer = createPeer1();
