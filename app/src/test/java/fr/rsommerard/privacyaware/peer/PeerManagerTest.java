@@ -78,15 +78,6 @@ public class PeerManagerTest {
     }
 
     @Test
-    public void testGetPeer2() {
-        Peer peer = createPeer1();
-
-        sPeerManager.addPeer(peer);
-
-        assertNotNull("should return a peer", sPeerManager.getPeer());
-    }
-
-    @Test
     public void testGetPeerNullNamedWithAddress() {
         Peer peer = createNullNamedPeer();
 
