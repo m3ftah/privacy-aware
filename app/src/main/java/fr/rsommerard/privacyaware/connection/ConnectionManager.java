@@ -29,6 +29,7 @@ public class ConnectionManager {
 
     private static final String TAG = "PACM";
 
+    private static final int LOCK_TIMEOUT = 31000;
     private static final int SOCKET_TIMEOUT = 31000;
     private static final int CONNECTION_TIMEOUT = 181000;
 
@@ -51,7 +52,8 @@ public class ConnectionManager {
 
     private enum ConnectionState {
         CONNECTED,
-        DISCONNECTED
+        DISCONNECTED,
+        LOCKED
     }
 
     public static ConnectionManager getInstance(final Context context) {
@@ -124,15 +126,26 @@ public class ConnectionManager {
         mPeerManager.stopCleaningExecutor();
 
         mServiceDiscoveryManager.stopDiscovery();
+
+        mExecutor = Executors.newSingleThreadScheduledExecutor();
+        mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                Log.i(TAG, "run()");
+
+                disconnect();
+            }
+        }, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+
         mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Log.i(TAG, "onSuccess()");
+                Log.i(TAG, "connect()::onSuccess()");
             }
 
             @Override
             public void onFailure(int reason) {
-                Log.e(TAG, "onFailure(): " + reason);
+                Log.e(TAG, "connect()::onFailure(): " + reason);
                 disconnect();
             }
         });
@@ -147,8 +160,30 @@ public class ConnectionManager {
 
         mInitiator = false;
 
-        mWifiP2pManager.cancelConnect(mWifiP2pChannel, null);
-        mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
+        // TODO: Try only cancel, only remove
+        mWifiP2pManager.cancelConnect(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.i(TAG, "cancelConnect::onSuccess()");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "cancelConnect::onFailure(): " + reason);
+            }
+        });
+
+        mWifiP2pManager.removeGroup(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.i(TAG, "removeGroup()::onSuccess()");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "removeGroup()::onFailure(): " + reason);
+            }
+        });
 
         mState = ConnectionState.DISCONNECTED;
 
@@ -185,20 +220,10 @@ public class ConnectionManager {
 
                             mState = ConnectionState.CONNECTED;
 
-                            mExecutor = Executors.newSingleThreadScheduledExecutor();
-                            mExecutor.scheduleAtFixedRate(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.i(TAG, "run()");
-
-                                    disconnect();
-                                }
-                            }, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-
                             WifiP2pDevice groupOwner = wifiP2pGroup.getOwner();
 
                             Log.d(TAG, "isGroupOwner? " + wifiP2pGroup.isGroupOwner());
-                            Log.d(TAG, "Initiator: " + mInitiator);
+                            Log.d(TAG, "Initiator? " + mInitiator);
 
                             if (mInitiator) {
                                 // A
