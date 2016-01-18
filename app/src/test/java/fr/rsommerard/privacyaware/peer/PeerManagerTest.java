@@ -65,7 +65,7 @@ public class PeerManagerTest {
         sPeerManager.addPeer(peer2);
         peers = sPeerManager.getPeers();
 
-        assertEquals("should be nbPeers + 1", nbPeers, peers.size());
+        assertEquals("should be nbPeers + 1", nbPeers + 1, peers.size());
     }
 
     @Test
