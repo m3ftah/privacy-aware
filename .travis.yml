@@ -29,7 +29,7 @@ android:
     # - sys-img-x86-android-17
 
 script:
-  - gradle build connectedCheck
+  - gradle test #build connectedCheck
 
 # before_script:
 #   - echo no | android create avd --force -n test -t android-17 --abi armeabi-v7a
