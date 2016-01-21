@@ -30,8 +30,6 @@ public class ServiceDiscoveryManager {
     private ScheduledExecutorService mExecutor;
 
     private final PeerManager mPeerManager;
-    private final WifiP2pDnsSdServiceInfo mWifiP2pDnsSdServiceInfo;
-    private final WifiP2pDnsSdServiceRequest mWifiP2pDnsSdServiceRequest;
     private final WifiP2pManager mWifiP2pManager;
     private final WifiP2pManager.Channel mWifiP2pChannel;
 
@@ -44,7 +42,7 @@ public class ServiceDiscoveryManager {
     }
 
     private ServiceDiscoveryManager(final Context context, final String port) {
-        Log.i(TAG, "ServiceDiscoveryManager(Context context)");
+        //Log.i(TAG, "ServiceDiscoveryManager(Context context)");
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
@@ -54,11 +52,11 @@ public class ServiceDiscoveryManager {
         Map<String, String> record = new HashMap<>();
         record.put("port", port);
 
-        mWifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
-        mWifiP2pManager.addLocalService(mWifiP2pChannel, mWifiP2pDnsSdServiceInfo, null);
+        WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
+        mWifiP2pManager.addLocalService(mWifiP2pChannel, wifiP2pDnsSdServiceInfo, null);
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, new SetDnsSdTxtRecordListener());
-        mWifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-        mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mWifiP2pDnsSdServiceRequest, null);
+        WifiP2pDnsSdServiceRequest wifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        mWifiP2pManager.addServiceRequest(mWifiP2pChannel, wifiP2pDnsSdServiceRequest, null);
     }
 
     public void startDiscovery() {
@@ -68,7 +66,7 @@ public class ServiceDiscoveryManager {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "run()");
 
                 mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
             }
@@ -76,11 +74,22 @@ public class ServiceDiscoveryManager {
     }
 
     public void stopDiscovery() {
-        Log.i(TAG, "stopDiscovery()");
+        //Log.i(TAG, "stopDiscovery()");
 
         if (mExecutor != null) {
             mExecutor.shutdown();
         }
+    }
+
+    public void destroy() {
+        Log.i(TAG, "destroy()");
+
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
+
+        mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, null);
+        mWifiP2pManager.clearLocalServices(mWifiP2pChannel, null);
     }
 
     private boolean isValidService(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
@@ -107,7 +116,7 @@ public class ServiceDiscoveryManager {
 
         @Override
         public void onDnsSdTxtRecordAvailable(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
-            //Log.i(TAG, "onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice)");
+            Log.i(TAG, "onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice)");
 
             if (isValidService(fullDomainName, txtRecordMap, srcDevice)) {
                 mPeerManager.addPeer(new Peer(srcDevice, txtRecordMap.get("port")));

@@ -31,7 +31,7 @@ public class PeerManager {
     }
 
     private PeerManager() {
-        Log.i(TAG, "PeerManager()");
+        //Log.i(TAG, "PeerManager()");
 
         mPeers = new ArrayList<>();
         mRand = new Random();
@@ -48,7 +48,7 @@ public class PeerManager {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "run()");
+                //Log.i(TAG, "run()");
 
                 mPeers.clear();
             }
@@ -68,7 +68,7 @@ public class PeerManager {
     }
 
     public Peer getPeer() {
-        Log.i(TAG, "getPeer()");
+        //Log.i(TAG, "getPeer()");
 
         if (mPeers.isEmpty()) {
             return null;
@@ -78,13 +78,13 @@ public class PeerManager {
     }
 
     public Peer getPeer(final String address) {
-        Log.i(TAG, "getPeer(String name)");
+        //Log.i(TAG, "getPeer(String name)");
 
         Log.d(TAG, address);
         Log.d(TAG, mPeers.toString());
 
         for (Peer peer : mPeers) {
-            Log.d(TAG, "\"" + peer.getAddress() + "\".equals(\"" + address + "\")");
+            //Log.d(TAG, "\"" + peer.getAddress() + "\".equals(\"" + address + "\")");
             if (peer.getAddress().equals(address)) {
                 return peer;
             }
@@ -112,6 +112,6 @@ public class PeerManager {
 
         mPeers.add(peer);
 
-        Log.d(TAG, mPeers.toString());
+        Log.d(TAG, "Peers: " + mPeers.toString());
     }
 }

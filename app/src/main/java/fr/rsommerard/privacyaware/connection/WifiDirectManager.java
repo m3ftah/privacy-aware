@@ -15,7 +15,6 @@ public class WifiDirectManager {
 
     private boolean mWifiDirectEnabled;
 
-    private final IntentFilter mWifiIntentFilter;
     private final WifiDirectBroadcastReceiver mWifiDirectBroadcastReceiver;
 
     private final Context mContext;
@@ -29,25 +28,25 @@ public class WifiDirectManager {
     }
 
     private WifiDirectManager(final Context context) {
-        Log.i(TAG, "WifiDirectManager()");
+        //Log.i(TAG, "WifiDirectManager()");
 
         mContext = context;
 
-        mWifiIntentFilter = new IntentFilter();
-        mWifiIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
 
         mWifiDirectBroadcastReceiver = new WifiDirectBroadcastReceiver();
-        mContext.registerReceiver(mWifiDirectBroadcastReceiver, mWifiIntentFilter);
+        mContext.registerReceiver(mWifiDirectBroadcastReceiver, intentFilter);
     }
 
-    public void purge() {
-        Log.i(TAG, "purge()");
+    public void destroy() {
+        //Log.i(TAG, "destroy()");
 
         mContext.unregisterReceiver(mWifiDirectBroadcastReceiver);
     }
 
     public boolean isWifiDirectEnabled() {
-        Log.i(TAG, "isWifiDirectEnabled()");
+        //Log.i(TAG, "isWifiDirectEnabled()");
 
         return mWifiDirectEnabled;
     }
@@ -56,7 +55,7 @@ public class WifiDirectManager {
 
         @Override
         public void onReceive(final Context context, final Intent intent) {
-            Log.i(TAG, "onReceive()");
+            //Log.i(TAG, "onReceive()");
 
             String action = intent.getAction();
 

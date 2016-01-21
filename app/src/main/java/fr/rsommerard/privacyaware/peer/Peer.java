@@ -25,11 +25,7 @@ public class Peer {
     public boolean equals(final Object obj) {
         final Peer peer = (Peer) obj;
 
-        if (peer.getAddress().equals(mAddress)) {
-            return true;
-        }
-
-        return false;
+        return peer.getAddress().equals(mAddress);
     }
 
     public InetAddress getLocalAddress() {

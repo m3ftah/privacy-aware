@@ -24,7 +24,7 @@ public class DataManager {
     }
 
     private DataManager() {
-        Log.i(TAG, "DataManager()");
+        //Log.i(TAG, "DataManager()");
 
         mDatas = new ArrayList<>();
         mRand = new Random();
@@ -33,11 +33,11 @@ public class DataManager {
     }
 
     private void populateDatas() {
-        Log.i(TAG, "populateDatas()");
+        //Log.i(TAG, "populateDatas()");
 
         int nbData = mRand.nextInt(4) + 1; // 1 to 5
 
-        Log.d(TAG, "nbDatas: " + nbData);
+        //Log.d(TAG, "nbDatas: " + nbData);
 
         for (int i = 0; i < nbData; i++) {
             mDatas.add(new Data(String.valueOf(mRand.nextInt(1000))));
@@ -47,7 +47,7 @@ public class DataManager {
     }
 
     public Data getData() {
-        Log.i(TAG, "getData()");
+        //Log.i(TAG, "getData()");
 
         if (mDatas.isEmpty()) {
             return null;
@@ -57,7 +57,7 @@ public class DataManager {
     }
 
     public void removeData(final Data data) {
-        Log.i(TAG, "removeData(Data data)");
+        //Log.i(TAG, "removeData(Data data)");
 
         mDatas.remove(data);
 
@@ -65,13 +65,13 @@ public class DataManager {
     }
 
     public List<Data> getDatas() {
-        Log.i(TAG, "getDatas()");
+        //Log.i(TAG, "getDatas()");
 
         return mDatas;
     }
 
     public void addData(final Data data) {
-        Log.i(TAG, "addData(Data data)");
+        //Log.i(TAG, "addData(Data data)");
 
         if (mDatas.contains(data)) {
             return;
@@ -79,7 +79,7 @@ public class DataManager {
 
         mDatas.add(data);
 
-        Log.d(TAG, mDatas.toString());
+        Log.d(TAG, "Datas: " + mDatas.toString());
     }
 
     public boolean hasDatas() {

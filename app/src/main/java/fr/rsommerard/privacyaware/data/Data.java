@@ -1,6 +1,8 @@
 package fr.rsommerard.privacyaware.data;
 
-public class Data {
+import java.io.Serializable;
+
+public class Data implements Serializable {
 
     private final String mContent;
 
@@ -16,11 +18,7 @@ public class Data {
     public boolean equals(final Object obj) {
         Data data = (Data) obj;
 
-        if (data.getContent().equals(mContent)) {
-            return true;
-        }
-
-        return false;
+        return data.getContent().equals(mContent);
     }
 
     @Override

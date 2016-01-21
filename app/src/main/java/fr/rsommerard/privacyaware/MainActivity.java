@@ -24,19 +24,17 @@ import fr.rsommerard.privacyaware.peer.PeerManager;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TAG = "PAMA";
+    private static final String TAG = "PAMA";
 
     private static final int DELAY = 3000;
 
     private ArrayAdapter<Peer> mPeersAdapter;
     private Button mProcessButton;
-    private Button mConnectButton;
     private List<Peer> mPeersToDisplay;
     private PeerManager mPeerManager;
     private ConnectionManager mConnectionManager;
     private ServiceDiscoveryManager mServiceDiscoveryManager;
     private ScheduledExecutorService mExecutor;
-    private WifiDirectManager mWifiDirectManager;
 
     private void setStartProcessOnClick() {
         mProcessButton.setOnClickListener(new View.OnClickListener() {
@@ -68,8 +66,8 @@ public class MainActivity extends AppCompatActivity {
         mProcessButton = (Button) findViewById(R.id.button_process);
         setStartProcessOnClick();
 
-        mConnectButton = (Button) findViewById(R.id.button_connect);
-        mConnectButton.setOnClickListener(new View.OnClickListener() {
+        Button connectButton = (Button) findViewById(R.id.button_connect);
+        connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 connectToPeer();
@@ -79,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         mPeerManager = PeerManager.getInstance();
         mConnectionManager = ConnectionManager.getInstance(this);
         mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this, String.valueOf(mConnectionManager.getPassiveThreadPort()));
-        mWifiDirectManager = WifiDirectManager.getInstance(this);
 
         mPeersToDisplay = new ArrayList<>();
         mPeersAdapter = new ArrayAdapter<>(this,
@@ -132,14 +129,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        mServiceDiscoveryManager.stopDiscovery();
+        mServiceDiscoveryManager.destroy();
 
-        mConnectionManager.disconnect();
         mConnectionManager.destroy();
 
         mPeerManager.destroy();
 
-        mExecutor.shutdown();
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
     }
 
     private void stopProcess() {
@@ -148,11 +146,13 @@ public class MainActivity extends AppCompatActivity {
         mPeersToDisplay.clear();
         mPeersAdapter.notifyDataSetChanged();
 
-        mServiceDiscoveryManager.stopDiscovery();
-
         mConnectionManager.disconnect();
 
-        mExecutor.shutdown();
+        mServiceDiscoveryManager.stopDiscovery();
+
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
 
         setStartProcessOnClick();
     }
