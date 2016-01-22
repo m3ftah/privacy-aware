@@ -54,7 +54,7 @@ public class CSConnectionThread extends Thread implements Runnable {
         //Log.i(TAG, "sleepBeforeProcess()");
 
         try {
-            sleep(5000);
+            sleep(11000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -65,7 +65,7 @@ public class CSConnectionThread extends Thread implements Runnable {
 
         mSocket.bind(null);
         Log.d(TAG, mPeer.getLocalAddress() + ":" + mPeer.getPort());
-        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 11000);
+        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 5000);
 
         Data data = mDataManager.getData();
 

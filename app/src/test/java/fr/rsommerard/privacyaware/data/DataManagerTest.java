@@ -40,7 +40,7 @@ public class DataManagerTest {
 
         mDataManager.addData(data);
 
-        assertTrue("should be true", mDataManager.hasDatas());
+        assertTrue("should be true", mDataManager.hasData());
     }
 
     @Test
