@@ -64,8 +64,8 @@ public class DataManager {
         Log.d(TAG, mDatas.toString());
     }
 
-    public List<Data> getDatas() {
-        //Log.i(TAG, "getDatas()");
+    public List<Data> getAllData() {
+        //Log.i(TAG, "getAllData()");
 
         return mDatas;
     }
@@ -82,7 +82,7 @@ public class DataManager {
         Log.d(TAG, "Datas: " + mDatas.toString());
     }
 
-    public boolean hasDatas() {
+    public boolean hasData() {
         return !mDatas.isEmpty();
     }
 }

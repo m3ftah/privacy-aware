@@ -48,11 +48,11 @@ public class DataManagerTest {
         Data data1 = createData1();
 
         mDataManager.addData(data1);
-        List<Data> datas = mDataManager.getDatas();
+        List<Data> datas = mDataManager.getAllData();
 
         int nbDatas = datas.size();
         mDataManager.addData(data1);
-        datas = mDataManager.getDatas();
+        datas = mDataManager.getAllData();
 
         assertEquals("should be the same number of datas", nbDatas, datas.size());
 
@@ -61,7 +61,7 @@ public class DataManagerTest {
         Data peer2 = createData2();
 
         mDataManager.addData(peer2);
-        datas = mDataManager.getDatas();
+        datas = mDataManager.getAllData();
 
         assertEquals("should be nbDatas + 1", nbDatas + 1, datas.size());
     }
@@ -81,12 +81,12 @@ public class DataManagerTest {
 
         mDataManager.addData(data);
 
-        List<Data> datas = mDataManager.getDatas();
+        List<Data> datas = mDataManager.getAllData();
 
         int nbDatas = datas.size();
 
         mDataManager.removeData(data);
-        datas = mDataManager.getDatas();
+        datas = mDataManager.getAllData();
 
         assertEquals("should remove a data", nbDatas - 1, datas.size());
     }

@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware.connection;
+package fr.rsommerard.privacyaware.wifidirect.connection;
 
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -13,8 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.peer.Peer;
-import fr.rsommerard.privacyaware.peer.PeerManager;
+import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
+import fr.rsommerard.privacyaware.wifidirect.peer.PeerManager;
 
 public class ServiceDiscoveryManager {
 
@@ -59,8 +59,8 @@ public class ServiceDiscoveryManager {
         mWifiP2pManager.addServiceRequest(mWifiP2pChannel, wifiP2pDnsSdServiceRequest, null);
     }
 
-    public void startDiscovery() {
-        Log.i(TAG, "startDiscovery()");
+    public void start() {
+        Log.i(TAG, "start()");
 
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
@@ -73,16 +73,8 @@ public class ServiceDiscoveryManager {
         }, 0, DELAY, TimeUnit.MILLISECONDS);
     }
 
-    public void stopDiscovery() {
-        //Log.i(TAG, "stopDiscovery()");
-
-        if (mExecutor != null) {
-            mExecutor.shutdown();
-        }
-    }
-
     public void destroy() {
-        Log.i(TAG, "destroy()");
+        //Log.i(TAG, "destroy()");
 
         if (mExecutor != null) {
             mExecutor.shutdown();

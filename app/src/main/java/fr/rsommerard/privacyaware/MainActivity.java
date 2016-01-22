@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -16,108 +15,72 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.connection.ConnectionManager;
-import fr.rsommerard.privacyaware.connection.ServiceDiscoveryManager;
-import fr.rsommerard.privacyaware.connection.WifiDirectManager;
-import fr.rsommerard.privacyaware.peer.Peer;
-import fr.rsommerard.privacyaware.peer.PeerManager;
+import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.data.DataManager;
+import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "PAMA";
 
-    private static final int DELAY = 3000;
-
-    private ArrayAdapter<Peer> mPeersAdapter;
-    private Button mProcessButton;
-    private List<Peer> mPeersToDisplay;
-    private PeerManager mPeerManager;
-    private ConnectionManager mConnectionManager;
-    private ServiceDiscoveryManager mServiceDiscoveryManager;
+    private ArrayAdapter<Data> mDataAdapter;
+    private List<Data> mDataToDisplay;
+    private WifiDirectManager mWifiDirectManager;
     private ScheduledExecutorService mExecutor;
-
-    private void setStartProcessOnClick() {
-        mProcessButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startProcess();
-            }
-        });
-
-        mProcessButton.setText(R.string.start_process);
-    }
-
-    private void setStopProcessOnClick() {
-        mProcessButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopProcess();
-            }
-        });
-
-        mProcessButton.setText(R.string.stop_process);
-    }
+    private DataManager mDataManager;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mProcessButton = (Button) findViewById(R.id.button_process);
-        setStartProcessOnClick();
+        mDataManager = DataManager.getInstance();
+        mWifiDirectManager = WifiDirectManager.getInstance(this);
 
-        Button connectButton = (Button) findViewById(R.id.button_connect);
-        connectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                connectToPeer();
-            }
-        });
+        mDataToDisplay = new ArrayList<>();
+        mDataAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, mDataToDisplay);
 
-        mPeerManager = PeerManager.getInstance();
-        mConnectionManager = ConnectionManager.getInstance(this);
-        mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(this, String.valueOf(mConnectionManager.getPassiveThreadPort()));
+        ListView dataListView = (ListView) findViewById(R.id.listview_data);
+        dataListView.setAdapter(mDataAdapter);
 
-        mPeersToDisplay = new ArrayList<>();
-        mPeersAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, mPeersToDisplay);
-
-        ListView peersListView = (ListView) findViewById(R.id.listview_peers);
-        peersListView.setAdapter(mPeersAdapter);
-
-        peersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        dataListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final Peer peer = (Peer) parent.getItemAtPosition(position);
-                showPeerDetails(peer);
+                final Data data = (Data) parent.getItemAtPosition(position);
+                showDataDetails(data);
             }
         });
+
+        mDataAdapter.notifyDataSetChanged();
+
+        mExecutor = Executors.newSingleThreadScheduledExecutor();
+        mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                //Log.i(TAG, "run()");
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mDataToDisplay.clear();
+                        mDataToDisplay.addAll(mDataManager.getAllData());
+                        mDataAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }, 3000, 3000, TimeUnit.MILLISECONDS);
     }
 
-    private void connectToPeer() {
-        Log.i(TAG, "connectToPeer()");
-
-        if (!mPeerManager.hasPeers()) {
-            Log.d(TAG, "No peers available");
-            return;
-        }
-
-        Peer peer = mPeerManager.getPeer();
-
-        mConnectionManager.connect(peer);
-    }
-
-    private void showPeerDetails(final Peer peer) {
-        Log.i(TAG, "showPeerDetails()");
+    private void showDataDetails(final Data data) {
+        Log.i(TAG, "showDataDetails()");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        String peerDetails = "Name: " + peer.getName();
-        peerDetails += "\n" + "Address: " + peer.getAddress();
-        peerDetails += "\n" + "Port: " + peer.getPort();
+        String dataDetails = "Content: " + data.getContent();
 
-        builder.setMessage(peerDetails);
-        builder.setTitle(R.string.peer_details);
+        builder.setMessage(dataDetails);
+        builder.setTitle(R.string.data_details);
 
         builder.setPositiveButton(R.string.ok, null);
 
@@ -129,58 +92,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        mServiceDiscoveryManager.destroy();
-
-        mConnectionManager.destroy();
-
-        mPeerManager.destroy();
+        mWifiDirectManager.destroy();
 
         if (mExecutor != null) {
             mExecutor.shutdown();
         }
-    }
-
-    private void stopProcess() {
-        Log.i(TAG, "stopProcess()");
-
-        mPeersToDisplay.clear();
-        mPeersAdapter.notifyDataSetChanged();
-
-        mConnectionManager.disconnect();
-
-        mServiceDiscoveryManager.stopDiscovery();
-
-        if (mExecutor != null) {
-            mExecutor.shutdown();
-        }
-
-        setStartProcessOnClick();
-    }
-
-    private void startProcess() {
-        Log.i(TAG, "startProcess()");
-
-        mPeersAdapter.notifyDataSetChanged();
-
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
-        mExecutor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                //Log.i(TAG, "run()");
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mPeersToDisplay.clear();
-                        mPeersToDisplay.addAll(mPeerManager.getPeers());
-                        mPeersAdapter.notifyDataSetChanged();
-                    }
-                });
-            }
-        }, DELAY, DELAY, TimeUnit.MILLISECONDS);
-
-        mServiceDiscoveryManager.startDiscovery();
-
-        setStopProcessOnClick();
     }
 }

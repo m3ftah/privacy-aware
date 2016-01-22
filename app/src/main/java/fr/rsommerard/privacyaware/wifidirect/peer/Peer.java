@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware.peer;
+package fr.rsommerard.privacyaware.wifidirect.peer;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 

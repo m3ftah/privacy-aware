@@ -1,12 +1,7 @@
 <resources>
     <string name="app_name">PrivacyAware</string>
 
-    <string name="start_process">Start process</string>
-    <string name="stop_process">Stop process</string>
-
-    <string name="peer_details">Peer details</string>
-
-    <string name="connect">Send data</string>
+    <string name="data_details">Peer details</string>
 
     <string name="ok">OK</string>
 </resources>

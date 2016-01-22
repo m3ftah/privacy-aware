@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware.connection.thread;
+package fr.rsommerard.privacyaware.wifidirect.connection.thread;
 
 import android.util.Log;
 
@@ -7,7 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import fr.rsommerard.privacyaware.connection.ConnectionManager;
+import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.data.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 

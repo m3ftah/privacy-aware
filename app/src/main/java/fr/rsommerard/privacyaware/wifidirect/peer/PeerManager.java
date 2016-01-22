@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware.peer;
+package fr.rsommerard.privacyaware.wifidirect.peer;
 
 import android.util.Log;
 
@@ -14,8 +14,6 @@ public class PeerManager {
     private static final String TAG = "PAPM";
 
     private static PeerManager sInstance;
-
-    private static final int DELAY = 181000;
 
     private final List<Peer> mPeers;
     private final Random mRand;
@@ -52,7 +50,7 @@ public class PeerManager {
 
                 mPeers.clear();
             }
-        }, 0, DELAY, TimeUnit.MILLISECONDS);
+        }, 0, 181000, TimeUnit.MILLISECONDS);
     }
 
     public void stopCleaningExecutor() {
