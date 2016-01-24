@@ -20,8 +20,6 @@ public class ServiceDiscoveryManager {
 
     private static final String TAG = "PASDM";
 
-    private static final int DELAY = 17000;
-
     private static final String SERVICE_NAME = "_rsp2p";
     private static final String SERVICE_TYPE = "_presence._tcp";
 
@@ -57,28 +55,36 @@ public class ServiceDiscoveryManager {
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, null, new SetDnsSdTxtRecordListener());
         WifiP2pDnsSdServiceRequest wifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
         mWifiP2pManager.addServiceRequest(mWifiP2pChannel, wifiP2pDnsSdServiceRequest, null);
+
+        startDiscoveryExecutor();
     }
 
-    public void start() {
-        Log.i(TAG, "start()");
+    public void stopDiscoveryExecutor() {
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
+    }
+
+    public void startDiscoveryExecutor() {
+        if (mExecutor != null) {
+            mExecutor.shutdown();
+        }
 
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "run()");
+                //Log.i(TAG, "run()");
 
                 mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
             }
-        }, 0, DELAY, TimeUnit.MILLISECONDS);
+        }, 0, 17000, TimeUnit.MILLISECONDS);
     }
 
     public void destroy() {
         //Log.i(TAG, "destroy()");
 
-        if (mExecutor != null) {
-            mExecutor.shutdown();
-        }
+        stopDiscoveryExecutor();
 
         mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, null);
         mWifiP2pManager.clearLocalServices(mWifiP2pChannel, null);

@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -20,35 +21,31 @@ public class WRConnectionThread extends Thread implements Runnable {
 
     private final ServerSocket mServerSocket;
     private final DataManager mDataManager;
-    private final ConnectionManager mConnectionManager;
 
     private Socket mSocket;
-    private final boolean mGroupOwner;
 
-    public WRConnectionThread(final ConnectionManager connectionManager, final ServerSocket serverSocket, final boolean groupOwner) {
+    public WRConnectionThread(final ServerSocket serverSocket) {
         Log.i(TAG, "WRConnectionThread(ServerSocket serverSocket)");
 
-        mConnectionManager = connectionManager;
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance();
-        mGroupOwner = groupOwner;
     }
 
     @Override
     public void run() {
-        //Log.i(TAG, "run()");
+        Log.i(TAG, "run()");
 
         try {
             process();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         } finally {
             exitProperly();
         }
     }
 
-    private void process() throws IOException, ClassNotFoundException {
-        //Log.i(TAG, "process()");
+    private void process() throws IOException, ClassNotFoundException, InterruptedException {
+        Log.i(TAG, "process()");
 
         mSocket = mServerSocket.accept();
 
@@ -59,11 +56,15 @@ public class WRConnectionThread extends Thread implements Runnable {
 
         mDataManager.addData(data);
 
-        mSocket.close();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(mSocket.getOutputStream());
+        objectOutputStream.writeObject("ACK");
+        objectOutputStream.flush();
+
+        sleep(2000);
     }
 
     private void exitProperly() {
-        //Log.i(TAG, "exitProperly()");
+        Log.i(TAG, "exitProperly()");
 
         if (mSocket != null) {
             if (mSocket.isConnected()) {
@@ -73,11 +74,6 @@ public class WRConnectionThread extends Thread implements Runnable {
                     e.printStackTrace();
                 }
             }
-        }
-
-        if (mGroupOwner) {
-            Log.i(TAG, "exitProperly()::disconnect()");
-            mConnectionManager.disconnect();
         }
     }
 }

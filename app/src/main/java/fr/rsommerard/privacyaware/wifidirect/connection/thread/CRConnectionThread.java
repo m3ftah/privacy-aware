@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -20,42 +21,38 @@ public class CRConnectionThread extends Thread implements Runnable {
     private static final String TAG = "PACRCT";
 
     private final DataManager mDataManager;
-    private final ConnectionManager mConnectionManager;
     private final Peer mPeer;
     private final Socket mSocket;
-    private final boolean mGroupOwner;
 
-    public CRConnectionThread(final ConnectionManager connectionManager, final Peer peer, final boolean groupOwner) {
+    public CRConnectionThread(final Peer peer) {
         Log.i(TAG, "CRConnectionThread(ConnectionManager connectionManager, Peer peer)");
 
-        mConnectionManager = connectionManager;
         mPeer = peer;
         mDataManager = DataManager.getInstance();
         mSocket = new Socket();
-        mGroupOwner = groupOwner;
     }
 
     @Override
     public void run() {
-        //Log.i(TAG, "run()");
+        Log.i(TAG, "run()");
 
         sleepBeforeProcess();
 
         try {
             process();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         } finally {
             exitProperly();
         }
     }
 
-    private void process() throws IOException, ClassNotFoundException {
-        //Log.i(TAG, "process()");
+    private void process() throws IOException, ClassNotFoundException, InterruptedException {
+        Log.i(TAG, "process()");
 
         mSocket.bind(null);
         Log.d(TAG, mPeer.getLocalAddress() + ":" + mPeer.getPort());
-        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 5000);
+        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 0);
 
         ObjectInputStream objectInputStream = new ObjectInputStream(mSocket.getInputStream());
         Data data = (Data) objectInputStream.readObject();
@@ -64,21 +61,25 @@ public class CRConnectionThread extends Thread implements Runnable {
 
         mDataManager.addData(data);
 
-        mSocket.close();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(mSocket.getOutputStream());
+        objectOutputStream.writeObject("ACK");
+        objectOutputStream.flush();
+
+        sleep(2000);
     }
 
     private void sleepBeforeProcess() {
-        //Log.i(TAG, "sleepBeforeProcess()");
+        Log.i(TAG, "sleepBeforeProcess()");
 
         try {
-            sleep(11000);
+            sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     private void exitProperly() {
-        //Log.i(TAG, "exitProperly()");
+        Log.i(TAG, "exitProperly()");
 
         if (mSocket.isConnected()) {
             try {
@@ -86,11 +87,6 @@ public class CRConnectionThread extends Thread implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        if (mGroupOwner) {
-            Log.i(TAG, "exitProperly()::disconnect()");
-            mConnectionManager.disconnect();
         }
     }
 }

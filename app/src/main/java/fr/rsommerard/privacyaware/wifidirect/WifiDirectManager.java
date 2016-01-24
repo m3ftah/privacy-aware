@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,11 @@ public class WifiDirectManager {
         mServiceDiscoveryManager =
                 ServiceDiscoveryManager.getInstance(mContext, mConnectionManager.getPassiveThreadPort());
 
+        // TODO: is it useful
+        Random random = new Random();
+        int delay = random.nextInt(181000 - 17000) + 17000;
+        Log.d(TAG, "Delay: " + delay);
+
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -59,7 +65,7 @@ public class WifiDirectManager {
 
                 process();
             }
-        }, 17000, 181000, TimeUnit.MILLISECONDS);
+        }, delay, 181000, TimeUnit.MILLISECONDS);
     }
 
     private void process() {

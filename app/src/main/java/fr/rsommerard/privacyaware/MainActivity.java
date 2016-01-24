@@ -23,8 +23,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "PAMA";
 
-    private ArrayAdapter<Data> mDataAdapter;
+    private DataAdapter mDataAdapter;
     private List<Data> mDataToDisplay;
+    private List<Data> mDataToDisplayTmp;
     private WifiDirectManager mWifiDirectManager;
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
@@ -38,7 +39,8 @@ public class MainActivity extends AppCompatActivity {
         mWifiDirectManager = WifiDirectManager.getInstance(this);
 
         mDataToDisplay = new ArrayList<>();
-        mDataAdapter = new ArrayAdapter<>(this,
+        mDataToDisplayTmp = new ArrayList<>();
+        mDataAdapter = new DataAdapter(this,
                 android.R.layout.simple_list_item_1, mDataToDisplay);
 
         ListView dataListView = (ListView) findViewById(R.id.listview_data);
@@ -52,24 +54,73 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mDataToDisplay.addAll(mDataManager.getAllData());
+        mDataToDisplayTmp.addAll(mDataToDisplay);
         mDataAdapter.notifyDataSetChanged();
 
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "run()");
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        List<Data> datas = mDataManager.getAllData();
+
+                        Log.d(TAG, datas.toString());
+                        Log.d(TAG, mDataToDisplay.toString());
+                        Log.d(TAG, mDataToDisplayTmp.toString());
+
                         mDataToDisplay.clear();
-                        mDataToDisplay.addAll(mDataManager.getAllData());
+                        mDataToDisplay.addAll(mDataToDisplayTmp);
+
+                        if (datas.size() < mDataToDisplay.size()) {
+                            Data dataRemoved = null;
+
+                            for (Data data : mDataToDisplayTmp) {
+                                if (datas.contains(data)) {
+                                    continue;
+                                }
+
+                                dataRemoved = data;
+                                break;
+                            }
+
+                            int index = mDataToDisplay.indexOf(dataRemoved);
+                            mDataAdapter.setRemovedIndex(index);
+                            mDataAdapter.setAddedIndex(-1);
+                            mDataToDisplayTmp.remove(dataRemoved);
+                        } else if (datas.size() > mDataToDisplay.size()) {
+                            Data dataAdded = null;
+
+                            for (Data data : datas) {
+                                if (mDataToDisplay.contains(data)) {
+                                    continue;
+                                }
+
+                                dataAdded = data;
+                                break;
+                            }
+
+                            mDataToDisplay.clear();
+                            mDataToDisplay.addAll(datas);
+                            int index = mDataToDisplay.indexOf(dataAdded);
+                            mDataAdapter.setAddedIndex(index);
+                            mDataAdapter.setRemovedIndex(-1);
+                            mDataToDisplayTmp.clear();
+                            mDataToDisplayTmp.addAll(datas);
+                        } else {
+                            mDataAdapter.setAddedIndex(-1);
+                            mDataAdapter.setRemovedIndex(-1);
+                        }
+
                         mDataAdapter.notifyDataSetChanged();
                     }
                 });
             }
-        }, 3000, 3000, TimeUnit.MILLISECONDS);
+        }, 0, 5000, TimeUnit.MILLISECONDS);
     }
 
     private void showDataDetails(final Data data) {

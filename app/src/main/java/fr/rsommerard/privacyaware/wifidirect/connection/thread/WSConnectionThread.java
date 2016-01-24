@@ -3,6 +3,7 @@ package fr.rsommerard.privacyaware.wifidirect.connection.thread;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,35 +21,31 @@ public class WSConnectionThread extends Thread implements Runnable {
 
     private final ServerSocket mServerSocket;
     private final DataManager mDataManager;
-    private final ConnectionManager mConnectionManager;
-    private final boolean mGroupOwner;
 
     private Socket mSocket;
 
-    public WSConnectionThread(final ConnectionManager connectionManager, final ServerSocket serverSocket, final boolean groupOwner) {
+    public WSConnectionThread(final ServerSocket serverSocket) {
         Log.i(TAG, "WSConnectionThread(ServerSocket serverSocket)");
 
-        mConnectionManager = connectionManager;
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance();
-        mGroupOwner = groupOwner;
     }
 
     @Override
     public void run() {
-        //Log.i(TAG, "run()");
+        Log.i(TAG, "run()");
 
         try {
             process();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             exitProperly();
         }
     }
 
-    private void process() throws IOException {
-        //Log.i(TAG, "process()");
+    private void process() throws IOException, ClassNotFoundException {
+        Log.i(TAG, "process()");
 
         mSocket = mServerSocket.accept();
 
@@ -60,13 +57,17 @@ public class WSConnectionThread extends Thread implements Runnable {
         objectOutputStream.writeObject(data);
         objectOutputStream.flush();
 
-        mSocket.close();
+        ObjectInputStream objectInputStream = new ObjectInputStream(mSocket.getInputStream());
+        String ack = (String) objectInputStream.readObject();
 
-        mDataManager.removeData(data);
+        if ("ACK".equals(ack)) {
+            Log.d(TAG, "ACK received");
+            mDataManager.removeData(data);
+        }
     }
 
     private void exitProperly() {
-        //Log.i(TAG, "exitProperly()");
+        Log.i(TAG, "exitProperly()");
 
         if (mSocket != null) {
             if (mSocket.isConnected()) {
@@ -76,11 +77,6 @@ public class WSConnectionThread extends Thread implements Runnable {
                     e.printStackTrace();
                 }
             }
-        }
-
-        if (mGroupOwner) {
-            Log.i(TAG, "exitProperly()::disconnect()");
-            mConnectionManager.disconnect();
         }
     }
 }

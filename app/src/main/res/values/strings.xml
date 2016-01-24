@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">PrivacyAware</string>
 
-    <string name="data_details">Peer details</string>
+    <string name="data_details">Data details</string>
 
     <string name="ok">OK</string>
 </resources>

@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CRConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CSConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.WRConnectionThread;
@@ -79,7 +80,6 @@ public class ConnectionManager {
 
         try {
             mServerSocket = new ServerSocket(0);
-            mServerSocket.setSoTimeout(31000);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -92,11 +92,21 @@ public class ConnectionManager {
     }
 
     private boolean isConnectingOrConnected() {
-        return (mState == ConnectionState.CONNECTING || mState == ConnectionState.CONNECTED);
+        if (mState == ConnectionState.CONNECTING) {
+            Log.e(TAG, "ConnectionState.CONNECTING");
+            return true;
+        }
+
+        if (mState == ConnectionState.CONNECTED) {
+            Log.e(TAG, "ConnectionState.CONNECTED");
+            return true;
+        }
+
+        return false;
     }
 
     public void connect(final Peer peer) {
-        //Log.i(TAG, "connect()");
+        Log.i(TAG, "connect()");
 
         if (isConnectingOrConnected()) {
             Log.e(TAG, "ConnectionState.CONNECTING");
@@ -114,15 +124,17 @@ public class ConnectionManager {
 
         mState = ConnectionState.CONNECTING;
 
+        ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).stopDiscoveryExecutor();
+
         mExecutor = Executors.newSingleThreadScheduledExecutor();
-        mExecutor.scheduleWithFixedDelay(new Runnable() {
+        mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 //Log.i(TAG, "run()");
 
                 disconnect();
             }
-        }, 0, 31000, TimeUnit.MILLISECONDS);
+        }, 61000, 61000, TimeUnit.MILLISECONDS);
 
         mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
             @Override
@@ -132,14 +144,23 @@ public class ConnectionManager {
 
             @Override
             public void onFailure(int reason) {
-                Log.e(TAG, "connect()::onFailure(): " + reason);
+                if (WifiP2pManager.BUSY == reason) {
+                    Log.e(TAG, "connect()::onFailure(): BUSY");
+                } else if (WifiP2pManager.ERROR == reason) {
+                    Log.e(TAG, "connect()::onFailure(): ERROR");
+                } else if (WifiP2pManager.P2P_UNSUPPORTED == reason) {
+                    Log.e(TAG, "connect()::onFailure(): P2P_UNSUPPORTED");
+                } else {
+                    Log.e(TAG, "connect()::onFailure(): " + reason);
+                }
+
                 disconnect();
             }
         });
     }
 
     public void disconnect() {
-        //Log.i(TAG, "disconnect()");
+        Log.i(TAG, "disconnect()");
 
         if (mExecutor != null) {
             mExecutor.shutdown();
@@ -153,6 +174,8 @@ public class ConnectionManager {
         mState = ConnectionState.DISCONNECTED;
 
         mPeerManager.startCleaningExecutor();
+
+        ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).startDiscoveryExecutor();
     }
 
     public void destroy() {
@@ -188,17 +211,17 @@ public class ConnectionManager {
                                 mExecutor.shutdown();
                             }
 
-                            mState = ConnectionState.CONNECTED;
-
                             mExecutor = Executors.newSingleThreadScheduledExecutor();
-                            mExecutor.scheduleWithFixedDelay(new Runnable() {
+                            mExecutor.scheduleAtFixedRate(new Runnable() {
                                 @Override
                                 public void run() {
-                                    //Log.i(TAG, "run()");
+                                    Log.i(TAG, "run()");
 
                                     disconnect();
                                 }
-                            }, 0, 61000, TimeUnit.MILLISECONDS);
+                            }, 61000, 61000, TimeUnit.MILLISECONDS);
+
+                            mState = ConnectionState.CONNECTED;
 
                             WifiP2pDevice groupOwner = wifiP2pGroup.getOwner();
 
@@ -209,7 +232,7 @@ public class ConnectionManager {
                                 // A
                                 if (wifiP2pInfo.isGroupOwner) {
                                     // wait connection and send
-                                    mConnectionThread = new WSConnectionThread(ConnectionManager.this, mServerSocket, wifiP2pInfo.isGroupOwner);
+                                    mConnectionThread = new WSConnectionThread(mServerSocket);
                                     mConnectionThread.start();
                                 } else {
                                     // connect and send
@@ -219,14 +242,14 @@ public class ConnectionManager {
                                         peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     }
 
-                                    mConnectionThread = new CSConnectionThread(ConnectionManager.this, peer, wifiP2pInfo.isGroupOwner);
+                                    mConnectionThread = new CSConnectionThread(peer);
                                     mConnectionThread.start();
                                 }
                             } else {
                                 // B
                                 if (wifiP2pInfo.isGroupOwner) {
                                     // wait connection and receive
-                                    mConnectionThread = new WRConnectionThread(ConnectionManager.this, mServerSocket, wifiP2pInfo.isGroupOwner);
+                                    mConnectionThread = new WRConnectionThread(mServerSocket);
                                     mConnectionThread.start();
                                 } else {
                                     // connect and receive
@@ -236,9 +259,17 @@ public class ConnectionManager {
                                         peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     }
 
-                                    mConnectionThread = new CRConnectionThread(ConnectionManager.this, peer, wifiP2pInfo.isGroupOwner);
+                                    mConnectionThread = new CRConnectionThread(peer);
                                     mConnectionThread.start();
                                 }
+                            }
+
+                            try {
+                                mConnectionThread.join();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            } finally {
+                                disconnect();
                             }
                         } else {
                             Log.i(TAG, "Devices disconnected");

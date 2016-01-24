@@ -35,7 +35,7 @@ public class DataManager {
     private void populateDatas() {
         //Log.i(TAG, "populateDatas()");
 
-        int nbData = mRand.nextInt(4) + 1; // 1 to 5
+        int nbData = mRand.nextInt(4) + 2; // 2 to 5
 
         //Log.d(TAG, "nbDatas: " + nbData);
 

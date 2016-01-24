@@ -3,6 +3,7 @@ package fr.rsommerard.privacyaware.wifidirect.connection.thread;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -20,30 +21,26 @@ public class CSConnectionThread extends Thread implements Runnable {
     private static final String TAG = "PACSCT";
 
     private final DataManager mDataManager;
-    private final ConnectionManager mConnectionManager;
     private final Peer mPeer;
     private final Socket mSocket;
-    private final boolean mGroupOwner;
 
-    public CSConnectionThread(final ConnectionManager connectionManager, final Peer peer, final boolean groupOwner) {
+    public CSConnectionThread(final Peer peer) {
         Log.i(TAG, "CSConnectionThread(ConnectionManager connectionManager, Peer peer)");
 
-        mConnectionManager = connectionManager;
         mPeer = peer;
         mDataManager = DataManager.getInstance();
         mSocket = new Socket();
-        mGroupOwner = groupOwner;
     }
 
     @Override
     public void run() {
-        //Log.i(TAG, "run()");
+        Log.i(TAG, "run()");
 
         sleepBeforeProcess();
 
         try {
             process();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             exitProperly();
@@ -51,21 +48,21 @@ public class CSConnectionThread extends Thread implements Runnable {
     }
 
     private void sleepBeforeProcess() {
-        //Log.i(TAG, "sleepBeforeProcess()");
+        Log.i(TAG, "sleepBeforeProcess()");
 
         try {
-            sleep(11000);
+            sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    private void process() throws IOException {
-        //Log.i(TAG, "process()");
+    private void process() throws IOException, ClassNotFoundException {
+        Log.i(TAG, "process()");
 
         mSocket.bind(null);
         Log.d(TAG, mPeer.getLocalAddress() + ":" + mPeer.getPort());
-        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 5000);
+        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 0);
 
         Data data = mDataManager.getData();
 
@@ -75,13 +72,17 @@ public class CSConnectionThread extends Thread implements Runnable {
         objectOutputStream.writeObject(data);
         objectOutputStream.flush();
 
-        mSocket.close();
+        ObjectInputStream objectInputStream = new ObjectInputStream(mSocket.getInputStream());
+        String ack = (String) objectInputStream.readObject();
 
-        mDataManager.removeData(data);
+        if ("ACK".equals(ack)) {
+            Log.d(TAG, "ACK received");
+            mDataManager.removeData(data);
+        }
     }
 
     private void exitProperly() {
-        //Log.i(TAG, "exitProperly()");
+        Log.i(TAG, "exitProperly()");
 
         if (mSocket.isConnected()) {
             try {
@@ -89,11 +90,6 @@ public class CSConnectionThread extends Thread implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        if (mGroupOwner) {
-            Log.i(TAG, "exitProperly()::disconnect()");
-            mConnectionManager.disconnect();
         }
     }
 }
