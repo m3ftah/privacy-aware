@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                Log.i(TAG, "run()");
+                //Log.i(TAG, "run()");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -124,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDataDetails(final Data data) {
-        Log.i(TAG, "showDataDetails()");
+        //Log.i(TAG, "showDataDetails()");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
