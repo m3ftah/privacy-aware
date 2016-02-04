@@ -1,5 +1,6 @@
 package fr.rsommerard.privacyaware.wifidirect.connection.thread;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -8,8 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
-import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 
 /**
@@ -24,11 +24,11 @@ public class WSConnectionThread extends Thread implements Runnable {
 
     private Socket mSocket;
 
-    public WSConnectionThread(final ServerSocket serverSocket) {
+    public WSConnectionThread(final Context context, final ServerSocket serverSocket) {
         Log.i(TAG, "WSConnectionThread(ServerSocket serverSocket)");
 
         mServerSocket = serverSocket;
-        mDataManager = DataManager.getInstance();
+        mDataManager = DataManager.getInstance(context);
     }
 
     @Override

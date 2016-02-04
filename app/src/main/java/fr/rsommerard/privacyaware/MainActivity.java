@@ -10,11 +10,12 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
 
@@ -29,13 +30,19 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
 
+    private Random mRand;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDataManager = DataManager.getInstance();
+        mRand = new Random();
+
+        mDataManager = DataManager.getInstance(this);
         mWifiDirectManager = WifiDirectManager.getInstance(this);
+
+        populateDatas();
 
         mDataToDisplay = new ArrayList<>();
         mDataToDisplayTmp = new ArrayList<>();
@@ -120,6 +127,18 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }, 0, 5000, TimeUnit.MILLISECONDS);
+    }
+
+    private void populateDatas() {
+        //Log.i(TAG, "populateDatas()");
+
+        int nbData = mRand.nextInt(4) + 2; // 2 to 5
+
+        for (int i = 0; i < nbData; i++) {
+            Data data = new Data();
+            data.setContent(String.valueOf(mRand.nextInt(1000)));
+            mDataManager.addData(data);
+        }
     }
 
     private void showDataDetails(final Data data) {

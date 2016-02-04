@@ -2,15 +2,19 @@ package fr.rsommerard.privacyaware.data;
 
 import android.os.Build;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import fr.rsommerard.privacyaware.BuildConfig;
+import fr.rsommerard.privacyaware.dao.Data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -20,64 +24,60 @@ import static org.junit.Assert.assertTrue;
 @Config(constants = BuildConfig.class, sdk = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class DataManagerTest {
 
-    private static DataManager mDataManager;
+    private DataManager mDataManager;
 
     @Before
     public void setup() {
-        mDataManager = DataManager.getInstance();
+        mDataManager = DataManager.getInstance(RuntimeEnvironment.application);
+
+        Data data = new Data();
+        data.setContent("This is the initial data.");
+        mDataManager.addData(data);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Field field = DataManager.class.getDeclaredField("sInstance");
+        field.setAccessible(true);
+        field.set(null, null);
     }
 
     @Test
     public void testSingleton() {
-        DataManager dataManager = DataManager.getInstance();
+        DataManager dataManager = DataManager.getInstance(RuntimeEnvironment.application);
 
-        assertEquals("should be equals", mDataManager, dataManager);
+        assertEquals("should be the same reference", mDataManager, dataManager);
     }
 
     @Test
     public void testHasDatas() {
-        Data data = createData1();
-
-        mDataManager.addData(data);
-
-        assertTrue("should be true", mDataManager.hasData());
+        assertTrue("should contain the initial data (at least)", mDataManager.hasData());
     }
 
     @Test
     public void testAddData() {
-        Data data1 = createData1();
-
-        mDataManager.addData(data1);
         List<Data> datas = mDataManager.getAllData();
-
         int nbDatas = datas.size();
-        mDataManager.addData(data1);
+
+        Data data = new Data();
+        data.setContent("La volution.");
+
+        mDataManager.addData(data);
+
         datas = mDataManager.getAllData();
 
-        assertEquals("should be the same number of datas", nbDatas, datas.size());
-
-        nbDatas = datas.size();
-
-        Data peer2 = createData2();
-
-        mDataManager.addData(peer2);
-        datas = mDataManager.getAllData();
-
-        assertEquals("should be nbDatas + 1", nbDatas + 1, datas.size());
+        assertEquals("should have one more data than beginning", nbDatas + 1, datas.size());
     }
 
     @Test
     public void testGetData() {
-        Data data = createData1();
-
-        mDataManager.addData(data);
-
         assertNotNull("should return a data", mDataManager.getData());
     }
 
     @Test
     public void testRemoveData() {
-        Data data = createData3();
+        Data data = new Data();
+        data.setContent("Captp");
 
         mDataManager.addData(data);
 
@@ -88,18 +88,6 @@ public class DataManagerTest {
         mDataManager.removeData(data);
         datas = mDataManager.getAllData();
 
-        assertEquals("should remove a data", nbDatas - 1, datas.size());
-    }
-
-    private Data createData1() {
-        return new Data("Réfléchir, c'est fléchir deux fois.");
-    }
-
-    private Data createData2() {
-        return new Data("This is a Data");
-    }
-
-    private Data createData3() {
-        return new Data("Epic - Winning");
+        assertEquals("should remove the specific data", nbDatas - 1, datas.size());
     }
 }

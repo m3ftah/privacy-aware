@@ -232,7 +232,7 @@ public class ConnectionManager {
                                 // A
                                 if (wifiP2pInfo.isGroupOwner) {
                                     // wait connection and send
-                                    mConnectionThread = new WSConnectionThread(mServerSocket);
+                                    mConnectionThread = new WSConnectionThread(mContext, mServerSocket);
                                     mConnectionThread.start();
                                 } else {
                                     // connect and send
@@ -242,14 +242,14 @@ public class ConnectionManager {
                                         peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     }
 
-                                    mConnectionThread = new CSConnectionThread(peer);
+                                    mConnectionThread = new CSConnectionThread(mContext, peer);
                                     mConnectionThread.start();
                                 }
                             } else {
                                 // B
                                 if (wifiP2pInfo.isGroupOwner) {
                                     // wait connection and receive
-                                    mConnectionThread = new WRConnectionThread(mServerSocket);
+                                    mConnectionThread = new WRConnectionThread(mContext, mServerSocket);
                                     mConnectionThread.start();
                                 } else {
                                     // connect and receive
@@ -259,7 +259,7 @@ public class ConnectionManager {
                                         peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     }
 
-                                    mConnectionThread = new CRConnectionThread(peer);
+                                    mConnectionThread = new CRConnectionThread(mContext, peer);
                                     mConnectionThread.start();
                                 }
                             }

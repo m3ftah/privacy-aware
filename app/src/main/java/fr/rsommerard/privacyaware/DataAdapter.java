@@ -8,7 +8,7 @@ import android.widget.ArrayAdapter;
 
 import java.util.List;
 
-import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.dao.Data;
 
 public class DataAdapter extends ArrayAdapter<Data> {
 

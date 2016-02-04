@@ -46,7 +46,7 @@ public class WifiDirectManager {
         mContext = context;
 
         mPeerManager = PeerManager.getInstance();
-        mDataManager = DataManager.getInstance();
+        mDataManager = DataManager.getInstance(mContext);
 
         mConnectionManager = ConnectionManager.getInstance(mContext);
         mServiceDiscoveryManager =

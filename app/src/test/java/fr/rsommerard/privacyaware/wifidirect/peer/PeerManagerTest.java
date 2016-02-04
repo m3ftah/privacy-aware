@@ -15,9 +15,7 @@ import java.util.List;
 
 import fr.rsommerard.privacyaware.BuildConfig;
 
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -102,22 +100,6 @@ public class PeerManagerTest {
         sPeerManager.addPeer(peer);
 
         assertTrue("should be true", sPeerManager.hasPeers());
-    }
-
-    @Ignore
-    @Test
-    public void testCleaningPeers() {
-        Peer peer = createPeer1();
-
-        sPeerManager.addPeer(peer);
-
-        try {
-            sleep(185000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        assertFalse("should be cleaned", sPeerManager.hasPeers());
     }
 
     private Peer createPeer1() {

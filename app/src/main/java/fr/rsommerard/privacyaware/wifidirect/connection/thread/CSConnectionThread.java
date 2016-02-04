@@ -1,5 +1,6 @@
 package fr.rsommerard.privacyaware.wifidirect.connection.thread;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -8,8 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
-import fr.rsommerard.privacyaware.data.Data;
+import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
 
@@ -24,11 +24,11 @@ public class CSConnectionThread extends Thread implements Runnable {
     private final Peer mPeer;
     private final Socket mSocket;
 
-    public CSConnectionThread(final Peer peer) {
+    public CSConnectionThread(final Context context, final Peer peer) {
         Log.i(TAG, "CSConnectionThread(ConnectionManager connectionManager, Peer peer)");
 
         mPeer = peer;
-        mDataManager = DataManager.getInstance();
+        mDataManager = DataManager.getInstance(context);
         mSocket = new Socket();
     }
 
