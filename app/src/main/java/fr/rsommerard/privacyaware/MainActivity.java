@@ -10,7 +10,6 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,15 +30,10 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
 
-    private ScheduledExecutorService mExecutorData;
-    private Random mRandom;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mRandom = new Random();
 
         mDataManager = DataManager.getInstance(this);
         mWifiDirectManager = WifiDirectManager.getInstance(this);
@@ -80,18 +74,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }, 0, 5000, TimeUnit.MILLISECONDS);
-
-        mExecutorData = Executors.newSingleThreadScheduledExecutor();
-        mExecutorData.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                if (mRandom.nextBoolean() || mDataManager.getAllData().isEmpty()) {
-                    generateData();
-                } else {
-                    deleteData();
-                }
-            }
-        }, 0, 17000, TimeUnit.MILLISECONDS);
     }
 
     private void printDataRemoved(List<Data> dataList) {
@@ -194,17 +176,6 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void generateData() {
-        Data data = new Data(null, Demo.getRandomContent(), Demo.getRandomColor());
-        mDataManager.addData(data);
-    }
-
-    private void deleteData() {
-        List<Data> datas = mDataManager.getAllData();
-        Data data = datas.get(mRandom.nextInt(datas.size()));
-        mDataManager.removeData(data);
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -213,10 +184,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (mExecutor != null) {
             mExecutor.shutdown();
-        }
-
-        if (mExecutorData != null) {
-            mExecutorData.shutdown();
         }
     }
 }
