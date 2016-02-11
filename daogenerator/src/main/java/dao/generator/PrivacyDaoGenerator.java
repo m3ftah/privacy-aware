@@ -21,5 +21,6 @@ public class PrivacyDaoGenerator {
 
         data.addIdProperty();
         data.addStringProperty("content").notNull();
+        data.addIntProperty("color");
     }
 }

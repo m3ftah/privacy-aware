@@ -54,6 +54,7 @@ public class WRConnectionThread extends Thread implements Runnable {
 
         Log.d(TAG, "Received \"" + data.getContent() + "\"");
 
+        data.setId(null);
         mDataManager.addData(data);
 
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(mSocket.getOutputStream());

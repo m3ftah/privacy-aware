@@ -50,23 +50,23 @@ public class DataManagerTest {
     }
 
     @Test
-    public void testHasDatas() {
+    public void testHasData() {
         assertTrue("should contain the initial data (at least)", mDataManager.hasData());
     }
 
     @Test
     public void testAddData() {
-        List<Data> datas = mDataManager.getAllData();
-        int nbDatas = datas.size();
+        List<Data> dataList = mDataManager.getAllData();
+        int nbData = dataList.size();
 
         Data data = new Data();
         data.setContent("La volution.");
 
         mDataManager.addData(data);
 
-        datas = mDataManager.getAllData();
+        dataList = mDataManager.getAllData();
 
-        assertEquals("should have one more data than beginning", nbDatas + 1, datas.size());
+        assertEquals("should have one more data than beginning", nbData + 1, dataList.size());
     }
 
     @Test
@@ -81,13 +81,13 @@ public class DataManagerTest {
 
         mDataManager.addData(data);
 
-        List<Data> datas = mDataManager.getAllData();
+        List<Data> dataList = mDataManager.getAllData();
 
-        int nbDatas = datas.size();
+        int nbData = dataList.size();
 
         mDataManager.removeData(data);
-        datas = mDataManager.getAllData();
+        dataList = mDataManager.getAllData();
 
-        assertEquals("should remove the specific data", nbDatas - 1, datas.size());
+        assertEquals("should remove the specific data", nbData - 1, dataList.size());
     }
 }

@@ -19,12 +19,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CRConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CSConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.WRConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.WSConnectionThread;
-import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
 import fr.rsommerard.privacyaware.wifidirect.peer.PeerManager;
 
@@ -61,7 +59,7 @@ public class ConnectionManager {
     }
 
     private ConnectionManager(final Context context) {
-        Log.i(TAG, "ConnectionManager()");
+        Log.i(TAG, "ConnectionManager");
 
         mContext = context;
 
@@ -106,7 +104,7 @@ public class ConnectionManager {
     }
 
     public void connect(final Peer peer) {
-        Log.i(TAG, "connect()");
+        Log.i(TAG, "connect");
 
         if (isConnectingOrConnected()) {
             Log.e(TAG, "ConnectionState.CONNECTING");
@@ -130,7 +128,7 @@ public class ConnectionManager {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "connect::run");
 
                 disconnect();
             }
@@ -139,19 +137,19 @@ public class ConnectionManager {
         mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Log.i(TAG, "connect()::onSuccess()");
+                Log.i(TAG, "connect::onSuccess");
             }
 
             @Override
             public void onFailure(int reason) {
                 if (WifiP2pManager.BUSY == reason) {
-                    Log.e(TAG, "connect()::onFailure(): BUSY");
+                    Log.e(TAG, "connect::onFailure: BUSY");
                 } else if (WifiP2pManager.ERROR == reason) {
-                    Log.e(TAG, "connect()::onFailure(): ERROR");
+                    Log.e(TAG, "connect::onFailure: ERROR");
                 } else if (WifiP2pManager.P2P_UNSUPPORTED == reason) {
-                    Log.e(TAG, "connect()::onFailure(): P2P_UNSUPPORTED");
+                    Log.e(TAG, "connect::onFailure: P2P_UNSUPPORTED");
                 } else {
-                    Log.e(TAG, "connect()::onFailure(): " + reason);
+                    Log.e(TAG, "connect::onFailure: " + reason);
                 }
 
                 disconnect();
@@ -160,7 +158,7 @@ public class ConnectionManager {
     }
 
     public void disconnect() {
-        Log.i(TAG, "disconnect()");
+        Log.i(TAG, "disconnect");
 
         if (mExecutor != null) {
             mExecutor.shutdown();
@@ -179,7 +177,7 @@ public class ConnectionManager {
     }
 
     public void destroy() {
-        Log.i(TAG, "destroy()");
+        Log.i(TAG, "destroy");
 
         disconnect();
 
@@ -215,7 +213,7 @@ public class ConnectionManager {
                             mExecutor.scheduleAtFixedRate(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Log.i(TAG, "run()");
+                                    Log.i(TAG, "requestGroupInfo::run");
 
                                     disconnect();
                                 }

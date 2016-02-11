@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
+import fr.rsommerard.privacyaware.demo.Demo;
 import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,19 +31,20 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
 
-    private Random mRand;
+    private ScheduledExecutorService mExecutorData;
+    private Random mRandom;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mRand = new Random();
+        mRandom = new Random();
 
         mDataManager = DataManager.getInstance(this);
         mWifiDirectManager = WifiDirectManager.getInstance(this);
 
-        populateDatas();
+        populateData();
 
         mDataToDisplay = new ArrayList<>();
         mDataToDisplayTmp = new ArrayList<>();
@@ -73,70 +75,105 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        List<Data> datas = mDataManager.getAllData();
-
-                        Log.d(TAG, datas.toString());
-                        Log.d(TAG, mDataToDisplay.toString());
-                        Log.d(TAG, mDataToDisplayTmp.toString());
-
-                        mDataToDisplay.clear();
-                        mDataToDisplay.addAll(mDataToDisplayTmp);
-
-                        if (datas.size() < mDataToDisplay.size()) {
-                            Data dataRemoved = null;
-
-                            for (Data data : mDataToDisplayTmp) {
-                                if (datas.contains(data)) {
-                                    continue;
-                                }
-
-                                dataRemoved = data;
-                                break;
-                            }
-
-                            int index = mDataToDisplay.indexOf(dataRemoved);
-                            mDataAdapter.setRemovedIndex(index);
-                            mDataAdapter.setAddedIndex(-1);
-                            mDataToDisplayTmp.remove(dataRemoved);
-                        } else if (datas.size() > mDataToDisplay.size()) {
-                            Data dataAdded = null;
-
-                            for (Data data : datas) {
-                                if (mDataToDisplay.contains(data)) {
-                                    continue;
-                                }
-
-                                dataAdded = data;
-                                break;
-                            }
-
-                            mDataToDisplay.clear();
-                            mDataToDisplay.addAll(datas);
-                            int index = mDataToDisplay.indexOf(dataAdded);
-                            mDataAdapter.setAddedIndex(index);
-                            mDataAdapter.setRemovedIndex(-1);
-                            mDataToDisplayTmp.clear();
-                            mDataToDisplayTmp.addAll(datas);
-                        } else {
-                            mDataAdapter.setAddedIndex(-1);
-                            mDataAdapter.setRemovedIndex(-1);
-                        }
-
-                        mDataAdapter.notifyDataSetChanged();
+                        printData();
                     }
                 });
             }
         }, 0, 5000, TimeUnit.MILLISECONDS);
+
+        mExecutorData = Executors.newSingleThreadScheduledExecutor();
+        mExecutorData.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                if (mRandom.nextBoolean() || mDataManager.getAllData().isEmpty()) {
+                    generateData();
+                } else {
+                    deleteData();
+                }
+            }
+        }, 0, 17000, TimeUnit.MILLISECONDS);
     }
 
-    private void populateDatas() {
-        //Log.i(TAG, "populateDatas()");
+    private void printDataRemoved(List<Data> dataList) {
+        Data dataRemoved = null;
 
-        int nbData = mRand.nextInt(4) + 2; // 2 to 5
+        for (Data data : mDataToDisplayTmp) {
+            if (dataList.contains(data)) {
+                continue;
+            }
 
-        for (int i = 0; i < nbData; i++) {
+            dataRemoved = data;
+            break;
+        }
+
+        if (dataRemoved == null) {
+            return;
+        }
+
+        int index = mDataToDisplay.indexOf(dataRemoved);
+        mDataAdapter.setRemovedIndex(index);
+        mDataAdapter.setAddedIndex(-1);
+        mDataToDisplayTmp.remove(dataRemoved);
+    }
+
+    public void printDataAdded(List<Data> dataList) {
+        Data dataAdded = null;
+
+        for (Data data : dataList) {
+            if (mDataToDisplay.contains(data)) {
+                continue;
+            }
+
+            dataAdded = data;
+            break;
+        }
+
+        if (dataAdded == null) {
+            return;
+        }
+
+        mDataToDisplay.clear();
+        mDataToDisplay.addAll(dataList);
+        int index = mDataToDisplay.indexOf(dataAdded);
+        mDataAdapter.setAddedIndex(index);
+        mDataAdapter.setRemovedIndex(-1);
+        mDataToDisplayTmp.clear();
+        mDataToDisplayTmp.addAll(dataList);
+    }
+
+    private void printData() {
+        List<Data> dataList = mDataManager.getAllData();
+
+        Log.d(TAG, dataList.toString());
+        Log.d(TAG, mDataToDisplay.toString());
+        Log.d(TAG, mDataToDisplayTmp.toString());
+
+        mDataToDisplay.clear();
+        mDataToDisplay.addAll(mDataToDisplayTmp);
+
+        if (dataList.size() < mDataToDisplay.size()) {
+            printDataRemoved(dataList);
+        } else if (dataList.size() > mDataToDisplay.size()) {
+            printDataAdded(dataList);
+        } else {
+            mDataAdapter.setAddedIndex(-1);
+            mDataAdapter.setRemovedIndex(-1);
+            printDataRemoved(dataList);
+            printDataAdded(dataList);
+        }
+
+        mDataAdapter.notifyDataSetChanged();
+    }
+
+    private void populateData() {
+        //Log.i(TAG, "populateData()");
+
+        int dataColor = Demo.getRandomColor();
+
+        for (int i = 0; i < 3; i++) {
             Data data = new Data();
-            data.setContent(String.valueOf(mRand.nextInt(1000)));
+            data.setContent(Demo.getRandomContent());
+            data.setColor(dataColor);
             mDataManager.addData(data);
         }
     }
@@ -157,6 +194,17 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void generateData() {
+        Data data = new Data(null, Demo.getRandomContent(), Demo.getRandomColor());
+        mDataManager.addData(data);
+    }
+
+    private void deleteData() {
+        List<Data> datas = mDataManager.getAllData();
+        Data data = datas.get(mRandom.nextInt(datas.size()));
+        mDataManager.removeData(data);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -165,6 +213,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (mExecutor != null) {
             mExecutor.shutdown();
+        }
+
+        if (mExecutorData != null) {
+            mExecutorData.shutdown();
         }
     }
 }
