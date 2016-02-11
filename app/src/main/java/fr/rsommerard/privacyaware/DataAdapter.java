@@ -18,8 +18,8 @@ public class DataAdapter extends ArrayAdapter<Data> {
     private final int mAddedColor;
     private final int mRemovedColor;
 
-    public DataAdapter(final Context context, final int resource, final List<Data> datas) {
-        super(context, resource, datas);
+    public DataAdapter(final Context context, final int resource, final List<Data> dataList) {
+        super(context, resource, dataList);
         mRemovedIndex = -1;
         mAddedIndex = -1;
         mAddedColor = Color.argb(255, 68, 178, 108);
@@ -46,7 +46,7 @@ public class DataAdapter extends ArrayAdapter<Data> {
         } else if(mAddedIndex != -1 && position == mAddedIndex) {
             view.setBackgroundColor(mAddedColor);
         } else {
-            view.setBackgroundColor(mDefaultColor);
+            view.setBackgroundColor(this.getItem(position).getColor());
         }
 
         return view;

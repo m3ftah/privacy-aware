@@ -53,6 +53,10 @@ public class WSConnectionThread extends Thread implements Runnable {
 
         Log.d(TAG, "Sending \"" + data.getContent() + "\"");
 
+        if (data == null) {
+            return;
+        }
+
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(mSocket.getOutputStream());
         objectOutputStream.writeObject(data);
         objectOutputStream.flush();

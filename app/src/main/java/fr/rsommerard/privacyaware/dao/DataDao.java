@@ -25,6 +25,7 @@ public class DataDao extends AbstractDao<Data, Long> {
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Content = new Property(1, String.class, "content", false, "CONTENT");
+        public final static Property Color = new Property(2, Integer.class, "color", false, "COLOR");
     };
 
 
@@ -41,7 +42,8 @@ public class DataDao extends AbstractDao<Data, Long> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"DATA\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
-                "\"CONTENT\" TEXT NOT NULL );"); // 1: content
+                "\"CONTENT\" TEXT NOT NULL ," + // 1: content
+                "\"COLOR\" INTEGER);"); // 2: color
     }
 
     /** Drops the underlying database table. */
@@ -60,6 +62,11 @@ public class DataDao extends AbstractDao<Data, Long> {
             stmt.bindLong(1, id);
         }
         stmt.bindString(2, entity.getContent());
+ 
+        Integer color = entity.getColor();
+        if (color != null) {
+            stmt.bindLong(3, color);
+        }
     }
 
     /** @inheritdoc */
@@ -73,7 +80,8 @@ public class DataDao extends AbstractDao<Data, Long> {
     public Data readEntity(Cursor cursor, int offset) {
         Data entity = new Data( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
-            cursor.getString(offset + 1) // content
+            cursor.getString(offset + 1), // content
+            cursor.isNull(offset + 2) ? null : cursor.getInt(offset + 2) // color
         );
         return entity;
     }
@@ -83,6 +91,7 @@ public class DataDao extends AbstractDao<Data, Long> {
     public void readEntity(Cursor cursor, Data entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setContent(cursor.getString(offset + 1));
+        entity.setColor(cursor.isNull(offset + 2) ? null : cursor.getInt(offset + 2));
      }
     
     /** @inheritdoc */

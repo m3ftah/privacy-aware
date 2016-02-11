@@ -20,7 +20,7 @@ public class DataManager {
 
     private static DataManager sInstance;
 
-    private final List<Data> mDatas;
+    private final List<Data> mDataList;
     private final Random mRand;
     private final SQLiteDatabase mDb;
     private final DaoMaster mDaoMaster;
@@ -43,45 +43,45 @@ public class DataManager {
         mDaoSession = mDaoMaster.newSession();
         mDataDao = mDaoSession.getDataDao();
 
-        mDatas = new ArrayList<>();
+        mDataList = new ArrayList<>();
         mRand = new Random();
     }
 
     public Data getData() {
         //Log.i(TAG, "getData()");
 
-        if (mDatas.isEmpty()) {
+        if (mDataList.isEmpty()) {
             return null;
         }
 
-        return mDatas.get(mRand.nextInt(mDatas.size()));
+        return mDataList.get(mRand.nextInt(mDataList.size()));
     }
 
     public void removeData(final Data data) {
         //Log.i(TAG, "removeData(Data data)");
 
         mDataDao.delete(data);
-        mDatas.remove(data);
+        mDataList.remove(data);
 
-        Log.d(TAG, mDatas.toString());
+        Log.d(TAG, mDataList.toString());
     }
 
     public List<Data> getAllData() {
         //Log.i(TAG, "getAllData()");
 
-        return mDatas;
+        return mDataList;
     }
 
     public void addData(final Data data) {
         //Log.i(TAG, "addData(Data data)");
 
         mDataDao.insert(data);
-        mDatas.add(data);
+        mDataList.add(data);
 
-        Log.d(TAG, "Datas: " + mDatas.toString());
+        Log.d(TAG, "Data: " + mDataList.toString());
     }
 
     public boolean hasData() {
-        return !mDatas.isEmpty();
+        return !mDataList.isEmpty();
     }
 }
