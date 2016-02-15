@@ -35,7 +35,7 @@ public class ConnectionManager {
     private final Context mContext;
     private final ConnectionBroadcastReceiver mConnectionBroadcastReceiver;
     private final WifiP2pManager mWifiP2pManager;
-    private final WifiP2pManager.Channel mWifiP2pChannel;
+    private WifiP2pManager.Channel mWifiP2pChannel;
     private boolean mInitiator;
     private final PeerManager mPeerManager;
 
@@ -78,6 +78,7 @@ public class ConnectionManager {
 
         try {
             mServerSocket = new ServerSocket(0);
+            Log.i(TAG, "Port: " + getPassiveThreadPort());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -116,8 +117,6 @@ public class ConnectionManager {
         wifiP2pConfig.wps.setup = WpsInfo.PBC;
         wifiP2pConfig.groupOwnerIntent = 0;
 
-        mInitiator = true;
-
         mPeerManager.stopCleaningExecutor();
 
         mState = ConnectionState.CONNECTING;
@@ -133,6 +132,8 @@ public class ConnectionManager {
                 disconnect();
             }
         }, 61000, 61000, TimeUnit.MILLISECONDS);
+
+        mInitiator = true;
 
         mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
             @Override
@@ -152,7 +153,7 @@ public class ConnectionManager {
                     Log.e(TAG, "connect::onFailure: " + reason);
                 }
 
-                disconnect();
+                reset();
             }
         });
     }
@@ -176,6 +177,14 @@ public class ConnectionManager {
         ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).startDiscoveryExecutor();
     }
 
+    private void reset() {
+        Log.i(TAG, "reset");
+
+        disconnect();
+
+        mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), null);
+    }
+
     public void destroy() {
         Log.i(TAG, "destroy");
 
@@ -196,6 +205,11 @@ public class ConnectionManager {
                 final WifiP2pInfo wifiP2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
                 final NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 
+                if (wifiP2pInfo == null) {
+                    disconnect();
+                    return;
+                }
+
                 // EXTRA_WIFI_P2P_GROUP need API 18 (Android 4.3)
                 // WifiP2pGroup wifiP2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
 
@@ -204,6 +218,14 @@ public class ConnectionManager {
                     public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
                         if (networkInfo.isConnected()) {
                             Log.i(TAG, "Devices connected");
+
+                            if (mState == ConnectionState.CONNECTING) {
+                                Log.i(TAG, "mState: CONNECTING");
+                            } else if (mState == ConnectionState.CONNECTED){
+                                Log.i(TAG, "mState: CONNECTED");
+                            } else {
+                                Log.i(TAG, "mState: DISCONNECTED");
+                            }
 
                             if (mExecutor != null) {
                                 mExecutor.shutdown();
@@ -221,6 +243,11 @@ public class ConnectionManager {
 
                             mState = ConnectionState.CONNECTED;
 
+                            if (wifiP2pGroup == null) {
+                                disconnect();
+                                return;
+                            }
+
                             WifiP2pDevice groupOwner = wifiP2pGroup.getOwner();
 
                             Log.d(TAG, "isGroupOwner? " + wifiP2pGroup.isGroupOwner());
@@ -236,10 +263,12 @@ public class ConnectionManager {
                                     // connect and send
                                     Peer peer = mPeerManager.getPeer(groupOwner.deviceAddress);
 
-                                    if (peer != null) {
-                                        peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
+                                    if (peer == null) {
+                                        disconnect();
+                                        return;
                                     }
 
+                                    peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     mConnectionThread = new CSConnectionThread(mContext, peer);
                                     mConnectionThread.start();
                                 }
@@ -253,10 +282,12 @@ public class ConnectionManager {
                                     // connect and receive
                                     Peer peer = mPeerManager.getPeer(groupOwner.deviceAddress);
 
-                                    if (peer != null) {
-                                        peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
+                                    if (peer == null) {
+                                        disconnect();
+                                        return;
                                     }
 
+                                    peer.setLocalAddress(wifiP2pInfo.groupOwnerAddress);
                                     mConnectionThread = new CRConnectionThread(mContext, peer);
                                     mConnectionThread.start();
                                 }

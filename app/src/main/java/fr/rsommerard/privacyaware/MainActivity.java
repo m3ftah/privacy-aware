@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.demo.Demo;
 import fr.rsommerard.privacyaware.wifidirect.WifiDirectManager;
+import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
+import fr.rsommerard.privacyaware.wifidirect.peer.PeerManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private WifiDirectManager mWifiDirectManager;
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
+    private PeerManager mPeerManager;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -36,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mDataManager = DataManager.getInstance(this);
+        mPeerManager = PeerManager.getInstance();
         mWifiDirectManager = WifiDirectManager.getInstance(this);
 
         populateData();
@@ -53,6 +58,22 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final Data data = (Data) parent.getItemAtPosition(position);
                 showDataDetails(data);
+            }
+        });
+
+        Button sendDataButton = (Button) findViewById(R.id.button_send_data);
+        sendDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mWifiDirectManager.process();
+            }
+        });
+
+        Button showPeersButton = (Button) findViewById(R.id.button_show_peers);
+        showPeersButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPeers();
             }
         });
 
@@ -126,10 +147,6 @@ public class MainActivity extends AppCompatActivity {
     private void printData() {
         List<Data> dataList = mDataManager.getAllData();
 
-        Log.d(TAG, dataList.toString());
-        Log.d(TAG, mDataToDisplay.toString());
-        Log.d(TAG, mDataToDisplayTmp.toString());
-
         mDataToDisplay.clear();
         mDataToDisplay.addAll(mDataToDisplayTmp);
 
@@ -158,6 +175,30 @@ public class MainActivity extends AppCompatActivity {
             data.setColor(dataColor);
             mDataManager.addData(data);
         }
+    }
+
+    private void showPeers() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        List<Peer> peers = mPeerManager.getAllPeers();
+
+        String peersToDisplay = "";
+
+        for (Peer peer : peers) {
+            peersToDisplay += "\n" + peer.toString();
+        }
+
+        if (peers.isEmpty()) {
+            peersToDisplay += "None";
+        }
+
+        builder.setMessage(peersToDisplay);
+        builder.setTitle(R.string.peers_available);
+
+        builder.setPositiveButton(R.string.ok, null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     private void showDataDetails(final Data data) {

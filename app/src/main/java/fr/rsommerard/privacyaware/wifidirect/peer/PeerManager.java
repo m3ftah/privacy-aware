@@ -91,7 +91,7 @@ public class PeerManager {
         return null;
     }
 
-    public List<Peer> getPeers() {
+    public List<Peer> getAllPeers() {
         //Log.i(TAG, "getPeers()");
 
         return mPeers;

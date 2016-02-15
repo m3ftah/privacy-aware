@@ -64,7 +64,7 @@ public class WifiDirectManager {
         }, delay, 181000, TimeUnit.MILLISECONDS);
     }
 
-    private void process() {
+    public void process() {
         Log.i(TAG, "process()");
 
         if (!mPeerManager.hasPeers()) {

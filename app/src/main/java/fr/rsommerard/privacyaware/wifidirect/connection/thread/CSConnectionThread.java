@@ -40,7 +40,7 @@ public class CSConnectionThread extends Thread implements Runnable {
 
         try {
             process();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             exitProperly();
@@ -57,7 +57,7 @@ public class CSConnectionThread extends Thread implements Runnable {
         }
     }
 
-    private void process() throws IOException, ClassNotFoundException {
+    private void process() throws Exception {
         Log.i(TAG, "process()");
 
         mSocket.bind(null);

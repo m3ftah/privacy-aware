@@ -37,14 +37,14 @@ public class WSConnectionThread extends Thread implements Runnable {
 
         try {
             process();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             exitProperly();
         }
     }
 
-    private void process() throws IOException, ClassNotFoundException {
+    private void process() throws Exception {
         Log.i(TAG, "process()");
 
         mSocket = mServerSocket.accept();

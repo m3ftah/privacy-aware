@@ -40,14 +40,14 @@ public class CRConnectionThread extends Thread implements Runnable {
 
         try {
             process();
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             exitProperly();
         }
     }
 
-    private void process() throws IOException, ClassNotFoundException, InterruptedException {
+    private void process() throws Exception {
         Log.i(TAG, "process()");
 
         mSocket.bind(null);

@@ -13,5 +13,20 @@
     <ListView
         android:id="@+id/listview_data"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/button_show_peers"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/peers_available" />
+
+    <Button
+        android:id="@+id/button_send_data"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/send_data" />
 </LinearLayout>
