@@ -48,11 +48,11 @@ public class PeerManagerTest {
         Peer peer1 = createPeer1();
 
         sPeerManager.addPeer(peer1);
-        List<Peer> peers = sPeerManager.getPeers();
+        List<Peer> peers = sPeerManager.getAllPeers();
 
         int nbPeers = peers.size();
         sPeerManager.addPeer(peer1);
-        peers = sPeerManager.getPeers();
+        peers = sPeerManager.getAllPeers();
 
         assertEquals("should be the same number of peers", nbPeers, peers.size());
 
@@ -61,7 +61,7 @@ public class PeerManagerTest {
         Peer peer2 = createPeer2();
 
         sPeerManager.addPeer(peer2);
-        peers = sPeerManager.getPeers();
+        peers = sPeerManager.getAllPeers();
 
         assertEquals("should be nbPeers + 1", nbPeers + 1, peers.size());
     }
