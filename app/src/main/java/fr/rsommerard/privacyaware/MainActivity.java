@@ -11,7 +11,6 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
     private PeerManager mPeerManager;
-
-    public int dataFlag = 0;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -88,49 +85,16 @@ public class MainActivity extends AppCompatActivity {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "scheduleAtFixedRate::run()");
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         printData();
-
-                        if (dataFlag % 3 == 0) {
-                            if (!mDataManager.hasData()) {
-                                Data data = new Data();
-                                data.setContent(Demo.getRandomContent());
-                                data.setColor(Demo.getRandomColor());
-
-                                mDataManager.addData(data);
-
-                                Log.i(TAG, "Add data: " + data);
-                            } else {
-                                Random rand = new Random();
-                                if (rand.nextBoolean()) {
-                                    Data data = new Data();
-                                    data.setContent(Demo.getRandomContent());
-                                    data.setColor(Demo.getRandomColor());
-
-                                    mDataManager.addData(data);
-
-                                    Log.i(TAG, "Add data: " + data);
-                                } else {
-                                    Data data = mDataToDisplay.get(rand.nextInt(mDataToDisplay.size()));
-
-                                    Log.i(TAG, "Remove data: " + data);
-
-                                    mDataManager.removeData(data);
-                                }
-                            }
-
-                            dataFlag++;
-                        } else {
-                            dataFlag++;
-                        }
                     }
                 });
             }
-        }, 0, 5000, TimeUnit.MILLISECONDS);
+        }, 0, 7000, TimeUnit.MILLISECONDS);
     }
 
     private void printDataRemoved(List<Data> dataList) {
@@ -156,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         mDataToDisplayTmp.addAll(dataList);
     }
 
-    public void printDataAdded(List<Data> dataList) {
+    private void printDataAdded(List<Data> dataList) {
         Data dataAdded = null;
 
         for (Data data : dataList) {
