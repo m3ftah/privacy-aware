@@ -11,6 +11,7 @@ import java.net.Socket;
 
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
+import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 
 /**
  * Wait and Receive Connection Thread
@@ -21,6 +22,7 @@ public class WRConnectionThread extends Thread implements Runnable {
 
     private final ServerSocket mServerSocket;
     private final DataManager mDataManager;
+    private final ConnectionManager mConnectionManager;
 
     private Socket mSocket;
 
@@ -29,6 +31,7 @@ public class WRConnectionThread extends Thread implements Runnable {
 
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance(context);
+        mConnectionManager = ConnectionManager.getInstance(context);
     }
 
     @Override
@@ -39,6 +42,7 @@ public class WRConnectionThread extends Thread implements Runnable {
             process();
         } catch (Exception e) {
             e.printStackTrace();
+            mConnectionManager.disconnect();
         } finally {
             exitProperly();
         }
@@ -73,6 +77,7 @@ public class WRConnectionThread extends Thread implements Runnable {
                     mSocket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
+                    mConnectionManager.disconnect();
                 }
             }
         }
