@@ -11,6 +11,7 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
     private PeerManager mPeerManager;
+
+    public int dataFlag = 0;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -91,6 +94,39 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         printData();
+
+                        if (dataFlag % 3 == 0) {
+                            if (!mDataManager.hasData()) {
+                                Data data = new Data();
+                                data.setContent(Demo.getRandomContent());
+                                data.setColor(Demo.getRandomColor());
+
+                                mDataManager.addData(data);
+
+                                Log.i(TAG, "Add data: " + data);
+                            } else {
+                                Random rand = new Random();
+                                if (rand.nextBoolean()) {
+                                    Data data = new Data();
+                                    data.setContent(Demo.getRandomContent());
+                                    data.setColor(Demo.getRandomColor());
+
+                                    mDataManager.addData(data);
+
+                                    Log.i(TAG, "Add data: " + data);
+                                } else {
+                                    Data data = mDataToDisplay.get(rand.nextInt(mDataToDisplay.size()));
+
+                                    Log.i(TAG, "Remove data: " + data);
+
+                                    mDataManager.removeData(data);
+                                }
+                            }
+
+                            dataFlag++;
+                        } else {
+                            dataFlag++;
+                        }
                     }
                 });
             }
@@ -100,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
     private void printDataRemoved(List<Data> dataList) {
         Data dataRemoved = null;
 
-        for (Data data : mDataToDisplayTmp) {
+        for (Data data : mDataToDisplay) {
             if (dataList.contains(data)) {
                 continue;
             }
@@ -116,7 +152,8 @@ public class MainActivity extends AppCompatActivity {
         int index = mDataToDisplay.indexOf(dataRemoved);
         mDataAdapter.setRemovedIndex(index);
         mDataAdapter.setAddedIndex(-1);
-        mDataToDisplayTmp.remove(dataRemoved);
+        mDataToDisplayTmp.clear();
+        mDataToDisplayTmp.addAll(dataList);
     }
 
     public void printDataAdded(List<Data> dataList) {
@@ -145,10 +182,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void printData() {
+        Log.d(TAG, "printData()");
         List<Data> dataList = mDataManager.getAllData();
 
         mDataToDisplay.clear();
         mDataToDisplay.addAll(mDataToDisplayTmp);
+
+        Log.d(TAG, "dataList: " + dataList);
+        Log.d(TAG, "mDataToDisplay: " + mDataToDisplay);
 
         if (dataList.size() < mDataToDisplay.size()) {
             printDataRemoved(dataList);
@@ -157,8 +198,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mDataAdapter.setAddedIndex(-1);
             mDataAdapter.setRemovedIndex(-1);
-            printDataRemoved(dataList);
-            printDataAdded(dataList);
         }
 
         mDataAdapter.notifyDataSetChanged();
