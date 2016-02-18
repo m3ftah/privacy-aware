@@ -11,6 +11,7 @@ import java.net.Socket;
 
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
+import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
 
 /**
@@ -23,12 +24,14 @@ public class CSConnectionThread extends Thread implements Runnable {
     private final DataManager mDataManager;
     private final Peer mPeer;
     private final Socket mSocket;
+    private final ConnectionManager mConnectionManager;
 
     public CSConnectionThread(final Context context, final Peer peer) {
         Log.i(TAG, "CSConnectionThread(ConnectionManager connectionManager, Peer peer)");
 
         mPeer = peer;
         mDataManager = DataManager.getInstance(context);
+        mConnectionManager = ConnectionManager.getInstance(context);
         mSocket = new Socket();
     }
 
@@ -42,6 +45,7 @@ public class CSConnectionThread extends Thread implements Runnable {
             process();
         } catch (Exception e) {
             e.printStackTrace();
+            mConnectionManager.disconnect();
         } finally {
             exitProperly();
         }
@@ -83,6 +87,8 @@ public class CSConnectionThread extends Thread implements Runnable {
             Log.d(TAG, "ACK received");
             mDataManager.removeData(data);
         }
+
+        mConnectionManager.disconnect();
     }
 
     private void exitProperly() {
@@ -93,6 +99,7 @@ public class CSConnectionThread extends Thread implements Runnable {
                 mSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
+                mConnectionManager.disconnect();
             }
         }
     }

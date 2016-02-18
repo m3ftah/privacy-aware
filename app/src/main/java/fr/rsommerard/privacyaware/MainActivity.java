@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                Log.i(TAG, "scheduleAtFixedRate::run()");
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -94,13 +94,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 0, 5000, TimeUnit.MILLISECONDS);
+        }, 0, 7000, TimeUnit.MILLISECONDS);
     }
 
     private void printDataRemoved(List<Data> dataList) {
         Data dataRemoved = null;
 
-        for (Data data : mDataToDisplayTmp) {
+        for (Data data : mDataToDisplay) {
             if (dataList.contains(data)) {
                 continue;
             }
@@ -116,10 +116,11 @@ public class MainActivity extends AppCompatActivity {
         int index = mDataToDisplay.indexOf(dataRemoved);
         mDataAdapter.setRemovedIndex(index);
         mDataAdapter.setAddedIndex(-1);
-        mDataToDisplayTmp.remove(dataRemoved);
+        mDataToDisplayTmp.clear();
+        mDataToDisplayTmp.addAll(dataList);
     }
 
-    public void printDataAdded(List<Data> dataList) {
+    private void printDataAdded(List<Data> dataList) {
         Data dataAdded = null;
 
         for (Data data : dataList) {
@@ -145,10 +146,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void printData() {
+        Log.d(TAG, "printData()");
         List<Data> dataList = mDataManager.getAllData();
 
         mDataToDisplay.clear();
         mDataToDisplay.addAll(mDataToDisplayTmp);
+
+        Log.d(TAG, "dataList: " + dataList);
+        Log.d(TAG, "mDataToDisplay: " + mDataToDisplay);
 
         if (dataList.size() < mDataToDisplay.size()) {
             printDataRemoved(dataList);
@@ -157,8 +162,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mDataAdapter.setAddedIndex(-1);
             mDataAdapter.setRemovedIndex(-1);
-            printDataRemoved(dataList);
-            printDataAdded(dataList);
         }
 
         mDataAdapter.notifyDataSetChanged();
