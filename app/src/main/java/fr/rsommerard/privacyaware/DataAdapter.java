@@ -12,7 +12,6 @@ import fr.rsommerard.privacyaware.dao.Data;
 
 public class DataAdapter extends ArrayAdapter<Data> {
 
-    private final int mDefaultColor;
     private int mAddedIndex;
     private int mRemovedIndex;
     private final int mAddedColor;
@@ -24,7 +23,6 @@ public class DataAdapter extends ArrayAdapter<Data> {
         mAddedIndex = -1;
         mAddedColor = Color.argb(255, 68, 178, 108);
         mRemovedColor = Color.argb(255, 255, 108, 102);
-        mDefaultColor = Color.argb(0, 0, 0, 0);
     }
 
     public void setAddedIndex(final int index) {
