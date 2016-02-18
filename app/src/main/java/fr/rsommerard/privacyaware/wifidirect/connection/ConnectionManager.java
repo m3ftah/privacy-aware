@@ -292,14 +292,6 @@ public class ConnectionManager {
                                     mConnectionThread.start();
                                 }
                             }
-
-                            try {
-                                mConnectionThread.join();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            } finally {
-                                disconnect();
-                            }
                         } else {
                             Log.i(TAG, "Devices disconnected");
 
