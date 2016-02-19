@@ -19,13 +19,29 @@ public abstract class Demo {
     private static List<Integer> getColors() {
         List<Integer> colors = new ArrayList<>();
 
-        colors.add(Color.argb(255, 65, 229, 217));
-        colors.add(Color.argb(255, 59, 76, 75));
-        colors.add(Color.argb(255, 229, 65, 206));
-        colors.add(Color.argb(255, 188, 119, 143));
-        colors.add(Color.argb(255, 204, 108, 61));
-        colors.add(Color.argb(255, 153, 133, 122));
-        colors.add(Color.argb(255, 132, 178, 255));
+        colors.add(Color.rgb(233, 30, 99)); // Pink
+        colors.add(Color.rgb(156, 39, 176)); // Purple
+
+        colors.add(Color.rgb(103, 58, 183)); // Deep Purple
+        colors.add(Color.rgb(63, 81, 181)); // Indigo
+        colors.add(Color.rgb(33, 150, 243)); // Blue
+
+        colors.add(Color.rgb(3, 169, 244)); // Light Blue
+        colors.add(Color.rgb(0, 188, 212)); // Cyan
+        colors.add(Color.rgb(0, 150, 136)); // Teal
+
+        colors.add(Color.rgb(139, 195, 74)); // Light Green
+        colors.add(Color.rgb(205, 220, 57)); // Lime
+
+        colors.add(Color.rgb(255, 235, 59)); // Yellow
+        colors.add(Color.rgb(255, 193, 7)); // Amber
+        colors.add(Color.rgb(255, 152, 0)); // Orange
+
+        colors.add(Color.rgb(255, 87, 34)); // Deep Orange
+        colors.add(Color.rgb(121, 85, 72)); // Brown
+        colors.add(Color.rgb(158, 158, 158)); // Grey
+
+        colors.add(Color.rgb(96, 125, 139)); // Blue Grey
 
         return colors;
     }
