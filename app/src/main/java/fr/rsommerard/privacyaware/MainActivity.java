@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private ScheduledExecutorService mExecutor;
     private DataManager mDataManager;
     private PeerManager mPeerManager;
+    private Button mSendDataButton;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -61,8 +62,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button sendDataButton = (Button) findViewById(R.id.button_send_data);
-        sendDataButton.setOnClickListener(new View.OnClickListener() {
+        mSendDataButton = (Button) findViewById(R.id.button_send_data);
+        mSendDataButton.setEnabled(false);
+        mSendDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mWifiDirectManager.process();
@@ -90,11 +92,25 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        if (mPeerManager.hasPeers()) {
+                            enableSendButton();
+                        } else {
+                            disableSendButton();
+                        }
+
                         printData();
                     }
                 });
             }
         }, 0, 7000, TimeUnit.MILLISECONDS);
+    }
+
+    private void disableSendButton() {
+        mSendDataButton.setEnabled(false);
+    }
+
+    private void enableSendButton() {
+        mSendDataButton.setEnabled(true);
     }
 
     private void printDataRemoved(List<Data> dataList) {
