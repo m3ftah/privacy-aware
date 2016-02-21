@@ -21,8 +21,8 @@ public class DataAdapter extends ArrayAdapter<Data> {
         super(context, resource, dataList);
         mRemovedIndex = -1;
         mAddedIndex = -1;
-        mAddedColor = Color.rgb(244, 67, 54); // Green
-        mRemovedColor = Color.rgb(76, 175, 80); // Red
+        mAddedColor = Color.rgb(76, 175, 80); // Green
+        mRemovedColor = Color.rgb(244, 67, 54); // Red
     }
 
     public void setAddedIndex(final int index) {
