@@ -12,7 +12,6 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -122,8 +121,6 @@ public class ConnectionManager {
 
         mState = ConnectionState.CONNECTING;
 
-        Toast.makeText(mContext, "STATE: CONNECTING", Toast.LENGTH_SHORT).show();
-
         ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).stopDiscoveryExecutor();
 
         mExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -141,23 +138,18 @@ public class ConnectionManager {
         mWifiP2pManager.connect(mWifiP2pChannel, wifiP2pConfig, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(mContext, "SUCCESS", Toast.LENGTH_SHORT).show();
                 Log.i(TAG, "connect::onSuccess");
             }
 
             @Override
             public void onFailure(int reason) {
                 if (WifiP2pManager.BUSY == reason) {
-                    Toast.makeText(mContext, "FAILURE: BUSY", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "connect::onFailure: BUSY");
                 } else if (WifiP2pManager.ERROR == reason) {
-                    Toast.makeText(mContext, "FAILURE: ERROR", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "connect::onFailure: ERROR");
                 } else if (WifiP2pManager.P2P_UNSUPPORTED == reason) {
-                    Toast.makeText(mContext, "FAILURE: P2P_UNSUPPORTED", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "connect::onFailure: P2P_UNSUPPORTED");
                 } else {
-                    Toast.makeText(mContext, "FAILURE: UNKNOWN", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "connect::onFailure: " + reason);
                 }
 
@@ -179,8 +171,6 @@ public class ConnectionManager {
         mWifiP2pManager.removeGroup(mWifiP2pChannel, null);
 
         mState = ConnectionState.DISCONNECTED;
-
-        Toast.makeText(mContext, "STATE: DISCONNECTED", Toast.LENGTH_SHORT).show();
 
         mPeerManager.startCleaningExecutor();
 
@@ -252,8 +242,6 @@ public class ConnectionManager {
                             }, 61000, 61000, TimeUnit.MILLISECONDS);
 
                             mState = ConnectionState.CONNECTED;
-
-                            Toast.makeText(mContext, "STATE: CONNECTED", Toast.LENGTH_SHORT).show();
 
                             if (wifiP2pGroup == null) {
                                 disconnect();
