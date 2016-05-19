@@ -9,10 +9,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.dao.Device;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ServiceDiscoveryManager;
-import fr.rsommerard.privacyaware.wifidirect.device.Device;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
 public class WiFiDirectManager {
@@ -20,7 +20,6 @@ public class WiFiDirectManager {
     private static WiFiDirectManager sInstance;
 
     private final Context mContext;
-    private final ScheduledExecutorService mExecutor;
     private final DataManager mDataManager;
 
     private ConnectionManager mConnectionManager;
@@ -36,19 +35,16 @@ public class WiFiDirectManager {
     }
 
     private WiFiDirectManager(final Context context) {
-        //Log.i(WiFiDirect.TAG, "WiFiDirectManager()");
-
         mContext = context;
 
-        mDeviceManager = DeviceManager.getInstance();
+        mDeviceManager = DeviceManager.getInstance(mContext);
         mDataManager = DataManager.getInstance(mContext);
 
-        mConnectionManager = ConnectionManager.getInstance(mContext);
-        mServiceDiscoveryManager =
-                ServiceDiscoveryManager.getInstance(mContext, mConnectionManager.getPassiveThreadPort());
+        //mConnectionManager = ConnectionManager.getInstance(mContext);
+        mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(mContext);
 
         // TODO: is it useful
-        Random random = new Random();
+        /*Random random = new Random();
         int delay = random.nextInt(181000 - 17000) + 17000;
         Log.d(WiFiDirect.TAG, "Delay: " + delay);
 
@@ -60,13 +56,12 @@ public class WiFiDirectManager {
 
                 process();
             }
-        }, delay, 181000, TimeUnit.MILLISECONDS);
+        }, delay, 181000, TimeUnit.MILLISECONDS);*/
     }
 
-    public void process() {
-        Log.i(WiFiDirect.TAG, "process()");
+    public void start() {
 
-        if (!mDeviceManager.hasPeers()) {
+        /*if (!mDeviceManager.hasDevices()) {
             Log.d(WiFiDirect.TAG, "No peers available");
             return;
         }
@@ -78,15 +73,6 @@ public class WiFiDirectManager {
 
         Device device = mDeviceManager.getPeer();
 
-        mConnectionManager.connect(device);
-    }
-
-    public void destroy() {
-        //Log.i(WiFiDirect.TAG, "destroy()");
-
-        mConnectionManager.destroy();
-        mServiceDiscoveryManager.destroy();
-
-        mDeviceManager.destroy();
+        mConnectionManager.connect(device);*/
     }
 }

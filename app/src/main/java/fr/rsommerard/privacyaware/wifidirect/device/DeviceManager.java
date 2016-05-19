@@ -1,115 +1,58 @@
 package fr.rsommerard.privacyaware.wifidirect.device;
 
-import android.util.Log;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
-import java.util.ArrayList;
+import fr.rsommerard.privacyaware.dao.DaoMaster;
+import fr.rsommerard.privacyaware.dao.DaoMaster.DevOpenHelper;
+import fr.rsommerard.privacyaware.dao.DaoSession;
+
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.dao.Device;
+import fr.rsommerard.privacyaware.dao.DeviceDao;
 
 public class DeviceManager {
 
     private static DeviceManager sInstance;
 
-    private final List<Device> mDevices;
-    private final Random mRand;
+    private final Random mRandom;
+    private final DeviceDao mDeviceDao;
 
-    private ScheduledExecutorService mExecutor;
-
-    public static DeviceManager getInstance() {
+    public static DeviceManager getInstance(final Context context) {
         if (sInstance == null) {
-            sInstance = new DeviceManager();
+            sInstance = new DeviceManager(context);
         }
 
         return sInstance;
     }
 
-    private DeviceManager() {
-        //Log.i(WiFiDirect.TAG, "DeviceManager()");
+    private DeviceManager(final Context context) {
+        DevOpenHelper helper = new DevOpenHelper(context, "privacy-aware-db", null);
+        SQLiteDatabase mDb = helper.getWritableDatabase();
+        DaoMaster mDaoMaster = new DaoMaster(mDb);
+        DaoSession mDaoSession = mDaoMaster.newSession();
+        mDeviceDao = mDaoSession.getDeviceDao();
 
-        mDevices = new ArrayList<>();
-        mRand = new Random();
-
-        startCleaningExecutor();
+        mRandom = new Random();
     }
 
-    public void startCleaningExecutor() {
-        if (mExecutor != null) {
-            return;
-        }
-
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
-        mExecutor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                //Log.i(WiFiDirect.TAG, "run()");
-
-                mDevices.clear();
-            }
-        }, 0, 181000, TimeUnit.MILLISECONDS);
+    public Device getDevice() {
+        List<Device> devices = mDeviceDao.loadAll();
+        return devices.get(mRandom.nextInt(devices.size()));
     }
 
-    public void stopCleaningExecutor() {
-        if (mExecutor != null) {
-            mExecutor.shutdown();
-        }
+    public List<Device> getAllDevices() {
+        return mDeviceDao.loadAll();
     }
 
-    public void destroy() {
-        Log.i(WiFiDirect.TAG, "destroy()");
-
-        stopCleaningExecutor();
+    public boolean hasDevices() {
+        return mDeviceDao.count() != 0;
     }
 
-    public Device getPeer() {
-        //Log.i(WiFiDirect.TAG, "getPeer()");
-
-        if (mDevices.isEmpty()) {
-            return null;
-        }
-
-        return mDevices.get(mRand.nextInt(mDevices.size()));
-    }
-
-    public Device getPeer(final String address) {
-        //Log.i(WiFiDirect.TAG, "getPeer(String name)");
-
-        Log.d(WiFiDirect.TAG, address);
-        Log.d(WiFiDirect.TAG, mDevices.toString());
-
-        for (Device device : mDevices) {
-            //Log.d(TAG, "\"" + device.getAddress() + "\".equals(\"" + address + "\")");
-            if (device.getAddress().equals(address)) {
-                return device;
-            }
-        }
-
-        return null;
-    }
-
-    public List<Device> getAllPeers() {
-        //Log.i(WiFiDirect.TAG, "getPeers()");
-
-        return mDevices;
-    }
-
-    public boolean hasPeers() {
-        return !mDevices.isEmpty();
-    }
-
-    public void addPeer(final Device device) {
-        //Log.i(WiFiDirect.TAG, "addPeer(Device device)");
-
-        if (mDevices.contains(device)) {
-            return;
-        }
-
-        mDevices.add(device);
-
-        Log.d(WiFiDirect.TAG, "Peers: " + mDevices.toString());
+    public void addDevice(final Device device) {
+        mDeviceDao.insert(device);
     }
 }

@@ -20,11 +20,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.dao.Device;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CRConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.CSConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.WRConnectionThread;
 import fr.rsommerard.privacyaware.wifidirect.connection.thread.WSConnectionThread;
-import fr.rsommerard.privacyaware.wifidirect.device.Device;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
 public class ConnectionManager {
@@ -67,7 +67,7 @@ public class ConnectionManager {
         mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), null);
 
-        mDeviceManager = DeviceManager.getInstance();
+        mDeviceManager = DeviceManager.getInstance(mContext);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
@@ -115,8 +115,6 @@ public class ConnectionManager {
         wifiP2pConfig.deviceAddress = device.getAddress();
         wifiP2pConfig.wps.setup = WpsInfo.PBC;
         wifiP2pConfig.groupOwnerIntent = 0;
-
-        mDeviceManager.stopCleaningExecutor();
 
         mState = ConnectionState.CONNECTING;
 
@@ -171,8 +169,6 @@ public class ConnectionManager {
 
         mState = ConnectionState.DISCONNECTED;
 
-        mDeviceManager.startCleaningExecutor();
-
         ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).startDiscoveryExecutor();
     }
 
@@ -212,7 +208,7 @@ public class ConnectionManager {
                 // EXTRA_WIFI_P2P_GROUP need API 18 (Android 4.3)
                 // WifiP2pGroup wifiP2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
 
-                mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, new WifiP2pManager.GroupInfoListener() {
+                /*mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, new WifiP2pManager.GroupInfoListener() {
                     @Override
                     public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
                         if (networkInfo.isConnected()) {
@@ -297,7 +293,7 @@ public class ConnectionManager {
                             disconnect();
                         }
                     }
-                });
+                });*/
             }
         }
     }

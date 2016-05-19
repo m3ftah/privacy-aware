@@ -11,9 +11,9 @@ import java.net.Socket;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
+import fr.rsommerard.privacyaware.dao.Device;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
-import fr.rsommerard.privacyaware.wifidirect.device.Device;
 
 /**
  * Connect and Receive Connection Thread
@@ -53,7 +53,7 @@ public class CRConnectionThread extends Thread implements Runnable {
     private void process() throws Exception {
         Log.i(WiFiDirect.TAG, "process()");
 
-        mSocket.bind(null);
+        /*mSocket.bind(null);
         Log.d(WiFiDirect.TAG, mDevice.getLocalAddress() + ":" + mDevice.getPort());
         mSocket.connect(new InetSocketAddress(mDevice.getLocalAddress(), mDevice.getPort()), 0);
 
@@ -69,7 +69,7 @@ public class CRConnectionThread extends Thread implements Runnable {
         objectOutputStream.writeObject("ACK");
         objectOutputStream.flush();
 
-        sleep(2000);
+        sleep(2000);*/
     }
 
     private void sleepBeforeProcess() {
