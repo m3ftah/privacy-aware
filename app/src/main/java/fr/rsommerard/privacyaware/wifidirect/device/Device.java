@@ -1,31 +1,31 @@
-package fr.rsommerard.privacyaware.wifidirect.peer;
+package fr.rsommerard.privacyaware.wifidirect.device;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 
 import java.net.InetAddress;
 
-public class Peer {
+public class Device {
 
     private final String mName;
     private final String mAddress;
     private InetAddress mLocalAddress;
     private final int mPort;
 
-    public Peer(final WifiP2pDevice peer, final int port) {
+    public Device(final WifiP2pDevice peer, final int port) {
         mName = peer.deviceName;
         mAddress = peer.deviceAddress;
         mPort = port;
     }
 
-    public Peer(final WifiP2pDevice peer, final String port) {
+    public Device(final WifiP2pDevice peer, final String port) {
         this(peer, Integer.parseInt(port));
     }
 
     @Override
     public boolean equals(final Object obj) {
-        final Peer peer = (Peer) obj;
+        final Device device = (Device) obj;
 
-        return peer.getAddress().equals(mAddress);
+        return device.getAddress().equals(mAddress);
     }
 
     public InetAddress getLocalAddress() {

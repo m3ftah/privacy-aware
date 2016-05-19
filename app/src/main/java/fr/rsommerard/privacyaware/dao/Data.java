@@ -11,6 +11,8 @@ public class Data implements java.io.Serializable {
 
     private Long id;
     /** Not-null value. */
+    private String identifier;
+    /** Not-null value. */
     private String content;
     private Integer color;
 
@@ -24,8 +26,9 @@ public class Data implements java.io.Serializable {
         this.id = id;
     }
 
-    public Data(Long id, String content, Integer color) {
+    public Data(Long id, String identifier, String content, Integer color) {
         this.id = id;
+        this.identifier = identifier;
         this.content = content;
         this.color = color;
     }
@@ -36,6 +39,16 @@ public class Data implements java.io.Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    /** Not-null value. */
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    /** Not-null value; ensure this value is available before it is saved to the database. */
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     /** Not-null value. */

@@ -13,12 +13,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
-import fr.rsommerard.privacyaware.wifidirect.peer.PeerManager;
+import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.wifidirect.device.Device;
+import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
 public class ServiceDiscoveryManager {
-
-    private static final String TAG = "PASDM";
 
     private static final String SERVICE_NAME = "_rsp2p";
     private static final String SERVICE_TYPE = "_presence._tcp";
@@ -27,7 +26,7 @@ public class ServiceDiscoveryManager {
 
     private ScheduledExecutorService mExecutor;
 
-    private final PeerManager mPeerManager;
+    private final DeviceManager mDeviceManager;
     private final WifiP2pManager mWifiP2pManager;
     private final WifiP2pManager.Channel mWifiP2pChannel;
 
@@ -40,12 +39,12 @@ public class ServiceDiscoveryManager {
     }
 
     private ServiceDiscoveryManager(final Context context, final String port) {
-        //Log.i(TAG, "ServiceDiscoveryManager(Context context)");
+        //Log.i(WiFiDirect.TAG, "ServiceDiscoveryManager(Context context)");
 
         mWifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(context, context.getMainLooper(), null);
 
-        mPeerManager = PeerManager.getInstance();
+        mDeviceManager = DeviceManager.getInstance();
 
         Map<String, String> record = new HashMap<>();
         record.put("port", port);
@@ -74,7 +73,7 @@ public class ServiceDiscoveryManager {
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                //Log.i(TAG, "run()");
+                //Log.i(WiFiDirect.TAG, "run()");
 
                 mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
             }
@@ -82,7 +81,7 @@ public class ServiceDiscoveryManager {
     }
 
     public void destroy() {
-        //Log.i(TAG, "destroy()");
+        //Log.i(WiFiDirect.TAG, "destroy()");
 
         stopDiscoveryExecutor();
 
@@ -114,10 +113,10 @@ public class ServiceDiscoveryManager {
 
         @Override
         public void onDnsSdTxtRecordAvailable(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
-            Log.i(TAG, "onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice)");
+            Log.i(WiFiDirect.TAG, "onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice)");
 
             if (isValidService(fullDomainName, txtRecordMap, srcDevice)) {
-                mPeerManager.addPeer(new Peer(srcDevice, txtRecordMap.get("port")));
+                mDeviceManager.addPeer(new Device(srcDevice, txtRecordMap.get("port")));
             }
         }
     }

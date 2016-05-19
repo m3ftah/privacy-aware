@@ -24,8 +24,9 @@ public class DataDao extends AbstractDao<Data, Long> {
     */
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
-        public final static Property Content = new Property(1, String.class, "content", false, "CONTENT");
-        public final static Property Color = new Property(2, Integer.class, "color", false, "COLOR");
+        public final static Property Identifier = new Property(1, String.class, "identifier", false, "IDENTIFIER");
+        public final static Property Content = new Property(2, String.class, "content", false, "CONTENT");
+        public final static Property Color = new Property(3, Integer.class, "color", false, "COLOR");
     };
 
 
@@ -42,8 +43,12 @@ public class DataDao extends AbstractDao<Data, Long> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"DATA\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
-                "\"CONTENT\" TEXT NOT NULL ," + // 1: content
-                "\"COLOR\" INTEGER);"); // 2: color
+                "\"IDENTIFIER\" TEXT NOT NULL UNIQUE ," + // 1: identifier
+                "\"CONTENT\" TEXT NOT NULL ," + // 2: content
+                "\"COLOR\" INTEGER);"); // 3: color
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_DATA_IDENTIFIER ON DATA" +
+                " (\"IDENTIFIER\");");
     }
 
     /** Drops the underlying database table. */
@@ -61,11 +66,12 @@ public class DataDao extends AbstractDao<Data, Long> {
         if (id != null) {
             stmt.bindLong(1, id);
         }
-        stmt.bindString(2, entity.getContent());
+        stmt.bindString(2, entity.getIdentifier());
+        stmt.bindString(3, entity.getContent());
  
         Integer color = entity.getColor();
         if (color != null) {
-            stmt.bindLong(3, color);
+            stmt.bindLong(4, color);
         }
     }
 
@@ -80,8 +86,9 @@ public class DataDao extends AbstractDao<Data, Long> {
     public Data readEntity(Cursor cursor, int offset) {
         Data entity = new Data( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
-            cursor.getString(offset + 1), // content
-            cursor.isNull(offset + 2) ? null : cursor.getInt(offset + 2) // color
+            cursor.getString(offset + 1), // identifier
+            cursor.getString(offset + 2), // content
+            cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3) // color
         );
         return entity;
     }
@@ -90,8 +97,9 @@ public class DataDao extends AbstractDao<Data, Long> {
     @Override
     public void readEntity(Cursor cursor, Data entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setContent(cursor.getString(offset + 1));
-        entity.setColor(cursor.isNull(offset + 2) ? null : cursor.getInt(offset + 2));
+        entity.setIdentifier(cursor.getString(offset + 1));
+        entity.setContent(cursor.getString(offset + 2));
+        entity.setColor(cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3));
      }
     
     /** @inheritdoc */

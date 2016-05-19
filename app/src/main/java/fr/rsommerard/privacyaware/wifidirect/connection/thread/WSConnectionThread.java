@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
@@ -18,8 +19,6 @@ import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
  */
 public class WSConnectionThread extends Thread implements Runnable {
 
-    private static final String TAG = "PAWSCT";
-
     private final ServerSocket mServerSocket;
     private final DataManager mDataManager;
     private final ConnectionManager mConnectionManager;
@@ -27,7 +26,7 @@ public class WSConnectionThread extends Thread implements Runnable {
     private Socket mSocket;
 
     public WSConnectionThread(final Context context, final ServerSocket serverSocket) {
-        Log.i(TAG, "WSConnectionThread(ServerSocket serverSocket)");
+        Log.i(WiFiDirect.TAG, "WSConnectionThread(ServerSocket serverSocket)");
 
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance(context);
@@ -36,7 +35,7 @@ public class WSConnectionThread extends Thread implements Runnable {
 
     @Override
     public void run() {
-        Log.i(TAG, "run()");
+        Log.i(WiFiDirect.TAG, "run()");
 
         try {
             process();
@@ -49,13 +48,13 @@ public class WSConnectionThread extends Thread implements Runnable {
     }
 
     private void process() throws Exception {
-        Log.i(TAG, "process()");
+        Log.i(WiFiDirect.TAG, "process()");
 
         mSocket = mServerSocket.accept();
 
         Data data = mDataManager.getData();
 
-        Log.d(TAG, "Sending \"" + data.getContent() + "\"");
+        Log.d(WiFiDirect.TAG, "Sending \"" + data.getContent() + "\"");
 
         if (data == null) {
             return;
@@ -69,7 +68,7 @@ public class WSConnectionThread extends Thread implements Runnable {
         String ack = (String) objectInputStream.readObject();
 
         if ("ACK".equals(ack)) {
-            Log.d(TAG, "ACK received");
+            Log.d(WiFiDirect.TAG, "ACK received");
             mDataManager.removeData(data);
         }
 
@@ -77,7 +76,7 @@ public class WSConnectionThread extends Thread implements Runnable {
     }
 
     private void exitProperly() {
-        Log.i(TAG, "exitProperly()");
+        Log.i(WiFiDirect.TAG, "exitProperly()");
 
         if (mSocket != null) {
             if (mSocket.isConnected()) {

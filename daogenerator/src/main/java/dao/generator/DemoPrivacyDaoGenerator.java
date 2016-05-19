@@ -4,7 +4,7 @@ import de.greenrobot.daogenerator.DaoGenerator;
 import de.greenrobot.daogenerator.Entity;
 import de.greenrobot.daogenerator.Schema;
 
-public class PrivacyDaoGenerator {
+public class DemoPrivacyDaoGenerator {
     public static void main(String args[]) throws Exception {
         Schema schema = new Schema(1, "fr.rsommerard.privacyaware.dao");
         schema.enableKeepSectionsByDefault();
@@ -22,5 +22,6 @@ public class PrivacyDaoGenerator {
         data.addIdProperty();
         data.addStringProperty("identifier").index().unique().notNull();
         data.addStringProperty("content").notNull();
+        data.addIntProperty("color");
     }
 }

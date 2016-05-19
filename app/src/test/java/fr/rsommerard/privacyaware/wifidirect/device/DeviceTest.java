@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware.wifidirect.peer;
+package fr.rsommerard.privacyaware.wifidirect.device;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Build;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class, sdk = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class PeerTest {
+public class DeviceTest {
 
     private WifiP2pDevice mDevice;
 
@@ -35,74 +35,74 @@ public class PeerTest {
 
     @Test
     public void testPeerWithIntegerPort() {
-        Peer peer = createPeer();
+        Device device = createPeer();
 
-        assertNotNull("should not be null", peer);
+        assertNotNull("should not be null", device);
     }
 
     @Test
     public void testPeerWithStringPort() {
-        Peer peer = new Peer(mDevice, "42");
+        Device device = new Device(mDevice, "42");
 
-        assertNotNull("should not be null", peer);
+        assertNotNull("should not be null", device);
     }
 
     @Test
     public void testEquals() {
-        Peer peer1 = createPeer();
-        Peer peer2 = createPeer();
+        Device device1 = createPeer();
+        Device device2 = createPeer();
 
-        Peer peer3 = createOtherPeer();
+        Device device3 = createOtherPeer();
 
-        assertEquals("should be equals", peer1, peer2);
-        assertEquals("should be equals", peer2, peer1);
-        assertEquals("should be equals", peer3, peer3);
-        assertNotEquals("should not be equals", peer1, peer3);
-        assertNotEquals("should not be equals", peer3, peer2);
+        assertEquals("should be equals", device1, device2);
+        assertEquals("should be equals", device2, device1);
+        assertEquals("should be equals", device3, device3);
+        assertNotEquals("should not be equals", device1, device3);
+        assertNotEquals("should not be equals", device3, device2);
     }
 
     @Test
     public void testLocalAddress() throws UnknownHostException {
-        Peer peer = createPeer();
+        Device device = createPeer();
 
-        assertNull("should be null", peer.getLocalAddress());
+        assertNull("should be null", device.getLocalAddress());
 
         InetAddress inetAddress = InetAddress.getByName("192.168.0.1");
-        peer.setLocalAddress(inetAddress);
+        device.setLocalAddress(inetAddress);
 
-        assertEquals("should be equals", peer.getLocalAddress(), inetAddress);
+        assertEquals("should be equals", device.getLocalAddress(), inetAddress);
     }
 
     @Test
     public void testGetName() {
-        Peer peer = createPeer();
+        Device device = createPeer();
 
-        assertEquals("should be equals", "Android_19e4", peer.getName());
+        assertEquals("should be equals", "Android_19e4", device.getName());
     }
 
     @Test
     public void testGetPort() {
-        Peer peer = createPeer();
+        Device device = createPeer();
 
-        assertEquals("should be equals", 42, peer.getPort());
+        assertEquals("should be equals", 42, device.getPort());
     }
 
     @Test
     public void testToString() {
-        Peer peer = createPeer();
+        Device device = createPeer();
 
-        assertEquals("should be equals", "Android_19e4", peer.toString());
+        assertEquals("should be equals", "Android_19e4", device.toString());
     }
 
-    private Peer createPeer() {
-        return new Peer(mDevice, 42);
+    private Device createPeer() {
+        return new Device(mDevice, 42);
     }
 
-    private Peer createOtherPeer() {
+    private Device createOtherPeer() {
         WifiP2pDevice device = mock(WifiP2pDevice.class);
         device.deviceAddress = "7e:27:57:ae:57:ce";
         device.deviceName = "Android_bea6";
 
-        return new Peer(device, 1001);
+        return new Device(device, 1001);
     }
 }

@@ -1,8 +1,8 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.demo;
 
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,15 +15,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import fr.rsommerard.privacyaware.R;
+import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
-import fr.rsommerard.privacyaware.demo.DemoDataAdapter;
-import fr.rsommerard.privacyaware.demo.Demo;
 import fr.rsommerard.privacyaware.wifidirect.WiFiDirectManager;
 import fr.rsommerard.privacyaware.wifidirect.device.Device;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
-public class MainActivity extends AppCompatActivity {
+public class DemoActivity extends AppCompatActivity {
 
     private DemoDataAdapter mDemoDataAdapter;
     private List<Data> mDataToDisplay;
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_demo);
 
         mDataManager = DataManager.getInstance(this);
         mDeviceManager = DeviceManager.getInstance();

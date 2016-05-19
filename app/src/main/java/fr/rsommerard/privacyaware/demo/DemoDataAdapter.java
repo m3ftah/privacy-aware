@@ -1,4 +1,4 @@
-package fr.rsommerard.privacyaware;
+package fr.rsommerard.privacyaware.demo;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -10,14 +10,14 @@ import java.util.List;
 
 import fr.rsommerard.privacyaware.dao.Data;
 
-public class DataAdapter extends ArrayAdapter<Data> {
+public class DemoDataAdapter extends ArrayAdapter<Data> {
 
     private int mAddedIndex;
     private int mRemovedIndex;
     private final int mAddedColor;
     private final int mRemovedColor;
 
-    public DataAdapter(final Context context, final int resource, final List<Data> dataList) {
+    public DemoDataAdapter(final Context context, final int resource, final List<Data> dataList) {
         super(context, resource, dataList);
         mRemovedIndex = -1;
         mAddedIndex = -1;
