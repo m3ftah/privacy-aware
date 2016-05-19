@@ -9,12 +9,12 @@ public class PrivacyDaoGenerator {
         Schema schema = new Schema(1, "fr.rsommerard.privacyaware.dao");
         schema.enableKeepSectionsByDefault();
 
-        addData(schema);
+        createDataTable(schema);
 
         new DaoGenerator().generateAll(schema, "app/src/main/java");
     }
 
-    private static void addData(Schema schema) {
+    private static void createDataTable(Schema schema) {
         Entity data = schema.addEntity("Data");
 
         data.implementsSerializable();
