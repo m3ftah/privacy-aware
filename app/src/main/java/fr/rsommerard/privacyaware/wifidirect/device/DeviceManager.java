@@ -2,8 +2,11 @@ package fr.rsommerard.privacyaware.wifidirect.device;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
+import android.util.Log;
 
+import de.greenrobot.dao.query.Query;
+import de.greenrobot.dao.query.QueryBuilder;
+import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.DaoMaster;
 import fr.rsommerard.privacyaware.dao.DaoMaster.DevOpenHelper;
 import fr.rsommerard.privacyaware.dao.DaoSession;
@@ -36,6 +39,8 @@ public class DeviceManager {
         DaoSession mDaoSession = mDaoMaster.newSession();
         mDeviceDao = mDaoSession.getDeviceDao();
 
+        mDeviceDao.deleteAll(); // TODO: Delete this line
+
         mRandom = new Random();
     }
 
@@ -52,7 +57,30 @@ public class DeviceManager {
         return mDeviceDao.count() != 0;
     }
 
+    public boolean containDevice(Device device) {
+        QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
+        qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
+
+        Query<Device> query = qBuilder.build();
+
+        return query.unique() != null;
+    }
+
+    public void updateDevice(Device device) {
+        QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
+        qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
+
+        Query<Device> query = qBuilder.build();
+
+        Device d = query.unique();
+        device.setId(d.getId());
+
+        mDeviceDao.update(device);
+        Log.i(WiFiDirect.TAG, "Update " + d.toString() + " to " + device.toString());
+    }
+
     public void addDevice(final Device device) {
         mDeviceDao.insert(device);
+        Log.i(WiFiDirect.TAG, "Insert " + device.toString());
     }
 }

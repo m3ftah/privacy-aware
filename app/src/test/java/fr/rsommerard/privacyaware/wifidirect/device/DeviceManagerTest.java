@@ -79,6 +79,30 @@ public class DeviceManagerTest {
     }
 
     @Test
+    public void testContainDeviceWithNewTimestamp() {
+        Device device = new Device();
+        device.setName("Android_ffa6");
+        device.setAddress("7e:27:57:ae:57:ce");
+        device.setPort("42");
+        device.setTimestamp(Long.toString(System.currentTimeMillis()));
+
+        assertTrue("should contain this device", mDeviceManager.containDevice(device));
+    }
+
+    @Test
+    public void testUpdateDeviceWithNewTimestamp() {
+        Device device = new Device();
+        device.setName("Android_ffa6");
+        device.setAddress("7e:27:57:ae:57:ce");
+        device.setPort("42");
+        device.setTimestamp(Long.toString(System.currentTimeMillis()));
+
+        mDeviceManager.updateDevice(device);
+
+        assertTrue(true);
+    }
+
+    @Test
     public void testHasDevices() {
         Device device = createDevice1();
 

@@ -86,6 +86,18 @@ public class Device {
     }
 
     // KEEP METHODS - put your custom methods here
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder("[");
+
+        str.append("id: ").append(id).append(", ");
+        str.append("address: ").append(address).append(", ");
+        str.append("port: ").append(port).append(", ");
+        str.append("timestamp: ").append(timestamp);
+        str.append("]");
+
+        return str.toString();
+    }
     // KEEP METHODS END
 
 }

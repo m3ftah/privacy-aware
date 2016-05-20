@@ -45,9 +45,12 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         db.execSQL("CREATE TABLE " + constraint + "\"DEVICE\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
                 "\"NAME\" TEXT NOT NULL ," + // 1: name
-                "\"ADDRESS\" TEXT NOT NULL ," + // 2: address
+                "\"ADDRESS\" TEXT NOT NULL UNIQUE ," + // 2: address
                 "\"PORT\" TEXT NOT NULL ," + // 3: port
                 "\"TIMESTAMP\" TEXT NOT NULL );"); // 4: timestamp
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_DEVICE_ADDRESS ON DEVICE" +
+                " (\"ADDRESS\");");
     }
 
     /** Drops the underlying database table. */

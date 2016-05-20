@@ -11,17 +11,10 @@
     tools:context="fr.rsommerard.privacyaware.MainActivity">
 
     <Button
-        android:id="@+id/button_start_discovery"
+        android:id="@+id/button_print_devices"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@string/start_discovery" />
-
-    <Button
-        android:id="@+id/button_stop_discovery"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="@string/stop_discovery" />
+        android:text="@string/print_devices" />
 
 </LinearLayout>

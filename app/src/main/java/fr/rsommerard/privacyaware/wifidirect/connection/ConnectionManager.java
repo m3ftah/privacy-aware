@@ -118,8 +118,6 @@ public class ConnectionManager {
 
         mState = ConnectionState.CONNECTING;
 
-        ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).stopDiscoveryExecutor();
-
         mExecutor = Executors.newSingleThreadScheduledExecutor();
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -169,7 +167,6 @@ public class ConnectionManager {
 
         mState = ConnectionState.DISCONNECTED;
 
-        ServiceDiscoveryManager.getInstance(mContext, getPassiveThreadPort()).startDiscoveryExecutor();
     }
 
     private void reset() {
