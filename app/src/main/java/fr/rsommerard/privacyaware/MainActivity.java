@@ -9,8 +9,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.util.List;
-
 import fr.rsommerard.privacyaware.wifidirect.connection.ServiceDiscoveryManager;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
@@ -37,8 +35,9 @@ public class MainActivity extends AppCompatActivity {
         mPrintDevicesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Print devices", Toast.LENGTH_SHORT).show();
-                WiFiDirect.printDeviceList(mDeviceManager.getAllDevices());
+                Toast.makeText(MainActivity.this,
+                        WiFiDirect.devicesListToString(mDeviceManager.getAllDevices()),
+                        Toast.LENGTH_SHORT).show();
             }
         });
 

@@ -98,7 +98,7 @@ public abstract class WiFiDirect {
         }
     }
 
-    public static void printDeviceList(List<Device> devices) {
+    public static String devicesListToString(List<Device> devices) {
         int size = devices.size();
         Log.i(WiFiDirect.TAG, "Nb devices: " + size);
 
@@ -115,6 +115,6 @@ public abstract class WiFiDirect {
 
         str.append("]");
 
-        Log.i(WiFiDirect.TAG, str.toString());
+        return str.toString();
     }
 }
