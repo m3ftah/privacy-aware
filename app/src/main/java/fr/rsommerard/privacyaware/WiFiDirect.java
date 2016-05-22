@@ -6,6 +6,7 @@ import android.util.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -102,19 +103,22 @@ public abstract class WiFiDirect {
         int size = devices.size();
         Log.i(WiFiDirect.TAG, "Nb devices: " + size);
 
-        StringBuilder str = new StringBuilder("Devices: [");
+        StringBuilder str = new StringBuilder("[");
 
         if (!devices.isEmpty()) {
             str.append(devices.get(0).getName());
+            str.append(" (").append(new Date(Long.parseLong(devices.get(0).getTimestamp()))).append(")");
 
             for (int i = 1; i < size; i++) {
                 str.append(", ");
                 str.append(devices.get(i).getName());
+                str.append(" (").append(new Date(Long.parseLong(devices.get(i).getTimestamp()))).append(")");
             }
         }
 
         str.append("]");
 
+        Log.i(WiFiDirect.TAG, str.toString());
         return str.toString();
     }
 }

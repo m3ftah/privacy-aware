@@ -11,6 +11,8 @@ import fr.rsommerard.privacyaware.dao.DaoMaster;
 import fr.rsommerard.privacyaware.dao.DaoMaster.DevOpenHelper;
 import fr.rsommerard.privacyaware.dao.DaoSession;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -47,6 +49,15 @@ public class DeviceManager {
     public Device getDevice() {
         List<Device> devices = mDeviceDao.loadAll();
         return devices.get(mRandom.nextInt(devices.size()));
+    }
+
+    public Device getDevice(Device device) {
+        QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
+        qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
+
+        Query<Device> query = qBuilder.build();
+
+        return query.unique();
     }
 
     public List<Device> getAllDevices() {
