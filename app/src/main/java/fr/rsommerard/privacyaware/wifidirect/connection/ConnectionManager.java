@@ -67,7 +67,7 @@ public class ConnectionManager {
         mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
         mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), null);
 
-        mDeviceManager = DeviceManager.getInstance(mContext);
+        mDeviceManager = null;//DeviceManager.getInstance(mContext);
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);

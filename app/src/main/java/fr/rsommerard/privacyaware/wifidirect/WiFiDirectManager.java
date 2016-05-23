@@ -6,6 +6,12 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
@@ -14,93 +20,61 @@ import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
 public class WiFiDirectManager {
 
-    private static WiFiDirectManager sInstance;
+    private final ServiceDiscoveryManager mServiceDiscoveryManager;
 
-    private final Context mContext;
-    private final DataManager mDataManager;
-    private final WifiP2pManager mWifiP2pManager;
-    private final WifiP2pManager.Channel mWifiP2pChannel;
+    private final WifiManager mWiFiManager;
 
-    private ConnectionManager mConnectionManager;
-    private ServiceDiscoveryManager mServiceDiscoveryManager;
-    private DeviceManager mDeviceManager;
-    private WifiManager mWifi;
     private int mNetId;
 
-    public static WiFiDirectManager getInstance(final Context context) {
-        if (sInstance == null) {
-            sInstance = new WiFiDirectManager(context);
-        }
+    public WiFiDirectManager(final Context context) throws IOException {
+        WifiP2pManager wiFiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
 
-        return sInstance;
-    }
-
-    private WiFiDirectManager(final Context context) {
-        mContext = context;
-
-        mDeviceManager = DeviceManager.getInstance(mContext);
-        mDataManager = DataManager.getInstance(mContext);
-
-        mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
-
-        mWifiP2pChannel = mWifiP2pManager.initialize(mContext, mContext.getMainLooper(), new WifiP2pManager.ChannelListener() {
+        WifiP2pManager.Channel wiFiP2pChannel = wiFiP2pManager.initialize(context, context.getMainLooper(), new WifiP2pManager.ChannelListener() {
             @Override
             public void onChannelDisconnected() {
                 Log.i(WiFiDirect.TAG, "Channel disconnected");
             }
         });
 
-        mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(mContext, mWifiP2pManager, mWifiP2pChannel);
 
-        //mConnectionManager = ConnectionManager.getInstance(mContext);
-        //mServiceDiscoveryManager = ServiceDiscoveryManager.getInstance(mContext);
+        ServerSocket serverSocket = new ServerSocket(0);
+        Log.i(WiFiDirect.TAG, "Server port: " + serverSocket.getLocalPort());
 
-        // TODO: is it useful
-        /*Random random = new Random();
-        int delay = random.nextInt(181000 - 17000) + 17000;
-        Log.d(WiFiDirect.TAG, "Delay: " + delay);
 
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
-        mExecutor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                Log.i(WiFiDirect.TAG, "run()");
+        WiFiDirect.cleanAllGroupsRegistered(wiFiP2pManager, wiFiP2pChannel);
 
-                process();
-            }
-        }, delay, 181000, TimeUnit.MILLISECONDS);*/
+
+        mWiFiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
+
+        DeviceManager deviceManager = new DeviceManager(context);
+
+
+        String serverPort = Integer.toString(serverSocket.getLocalPort());
+        mServiceDiscoveryManager = new ServiceDiscoveryManager(wiFiP2pManager, wiFiP2pChannel, deviceManager, serverPort);
     }
 
     public void start() {
+        disconnectWiFi();
 
-        WiFiDirect.cleanAllGroupsRegistered(mWifiP2pManager, mWifiP2pChannel);
-
-        mWifi = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-        mNetId = mWifi.getConnectionInfo().getNetworkId();
-
-        if (mNetId != -1)
-            mWifi.disableNetwork(mNetId);
-
-        mServiceDiscoveryManager.start();
-
-        /*if (!mDeviceManager.hasDevices()) {
-            Log.d(WiFiDirect.TAG, "No peers available");
-            return;
-        }
-
-        if (!mDataManager.hasData()) {
-            Log.e(WiFiDirect.TAG, "No data");
-            return;
-        }
-
-        Device device = mDeviceManager.getPeer();
-
-        mConnectionManager.connect(device);*/
+        mServiceDiscoveryManager.startDiscovery();
     }
 
     public void stop() {
-        mServiceDiscoveryManager.stop();
+        mServiceDiscoveryManager.stopDiscovery();
+
+        reconnectWiFi();
+    }
+
+    private void disconnectWiFi() {
+        mNetId = mWiFiManager.getConnectionInfo().getNetworkId();
+
         if (mNetId != -1)
-            mWifi.enableNetwork(mNetId, true);
+            mWiFiManager.disableNetwork(mNetId);
+    }
+
+    private void reconnectWiFi() {
+        if (mNetId != -1)
+            mWiFiManager.enableNetwork(mNetId, true);
     }
 }

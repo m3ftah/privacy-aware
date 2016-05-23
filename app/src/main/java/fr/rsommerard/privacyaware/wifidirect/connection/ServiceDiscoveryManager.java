@@ -1,13 +1,11 @@
 package fr.rsommerard.privacyaware.wifidirect.connection;
 
-import android.content.Context;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.util.Log;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -18,78 +16,41 @@ import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Device;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
-// TODO: Explore Handler instead of Executor
-
 public class ServiceDiscoveryManager {
 
     private static final String SERVICE_NAME = "_rsp2p";
     private static final String SERVICE_TYPE = "_presence._tcp";
 
-    private static final int INITIAL_SERVICE_DISCOVERY_INTERVAL = 7000;
-    private static final int MAX_SERVICE_DISCOVERY_INTERVAL = 60000 * 60;
-
-    private static ServiceDiscoveryManager sInstance;
+    private static final int SERVICE_DISCOVERY_INTERVAL = 11000;
 
     private final DeviceManager mDeviceManager;
     private ScheduledExecutorService mExecutor;
-    private boolean isNewDeviceFoundDuringLastFiveMinutes;
-    private int mInterval;
 
-    private enum State {
-        START,
-        STOP
-    }
+    private final WifiP2pManager mWifiP2pManager;
+    private final WifiP2pManager.Channel mWifiP2pChannel;
 
-    private State mState;
+    private final String mServerPort;
 
-    private WifiP2pManager mWifiP2pManager;
-    private WifiP2pManager.Channel mWifiP2pChannel;
+    public ServiceDiscoveryManager(final WifiP2pManager manager,
+                                   final WifiP2pManager.Channel channel,
+                                   final DeviceManager deviceManager,
+                                   final String serverPort) {
 
-    public static ServiceDiscoveryManager getInstance(final Context context,
-                                                      final WifiP2pManager manager,
-                                                      final WifiP2pManager.Channel channel) {
-        if (sInstance == null) {
-            sInstance = new ServiceDiscoveryManager(context, manager, channel);
-        }
-
-        return sInstance;
-    }
-
-    private ServiceDiscoveryManager(final Context context,
-                                    final WifiP2pManager manager,
-                                    final WifiP2pManager.Channel channel) {
         mWifiP2pManager = manager;
         mWifiP2pChannel = channel;
 
-        mInterval = INITIAL_SERVICE_DISCOVERY_INTERVAL;
-        isNewDeviceFoundDuringLastFiveMinutes = true;
+        mServerPort = serverPort;
 
-        mState = State.STOP;
+        mDeviceManager = deviceManager;
 
-        mDeviceManager = DeviceManager.getInstance(context);
+        clearService();
 
-        clearLocalServicesAndServiceRequests();
-
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
+        initializeService();
     }
 
-    public void start() {
-        if (mState == State.START)  {
-            Log.i(WiFiDirect.TAG, "Discovery already started");
-            return;
-        }
-
-        if (mExecutor != null)
-            mExecutor.shutdown();
-
-        mExecutor = Executors.newSingleThreadScheduledExecutor();
-
-        computeNextExecutorInterval();
-
-        isNewDeviceFoundDuringLastFiveMinutes = false;
-
+    private void initializeService() {
         Map<String, String> record = new HashMap<>();
-        record.put("port", "42224");
+        record.put("port", mServerPort);
 
         WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
 
@@ -128,16 +89,8 @@ public class ServiceDiscoveryManager {
                     device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
                     if (mDeviceManager.containDevice(device)) {
-                        // TODO: To improve
-                        Date reference = new Date(System.currentTimeMillis() - MAX_SERVICE_DISCOVERY_INTERVAL);
-                        Device d = mDeviceManager.getDevice(device);
-                        // Device seen more than five minutes
-                        if (Long.parseLong(d.getTimestamp()) <= reference.getTime()) {
-                            isNewDeviceFoundDuringLastFiveMinutes = true;
-                        }
                         mDeviceManager.updateDevice(device);
                     } else {
-                        isNewDeviceFoundDuringLastFiveMinutes = true;
                         mDeviceManager.addDevice(device);
                     }
                 }
@@ -159,22 +112,31 @@ public class ServiceDiscoveryManager {
                         WiFiDirect.getActionListenerFailureName(reason));
             }
         });
+    }
 
+    public void startDiscovery() {
+        if (mExecutor != null) {
+            Log.i(WiFiDirect.TAG, "Discovery already started");
+            return;
+        }
+
+        initializeService();
+
+        mExecutor = Executors.newSingleThreadScheduledExecutor();
+
+        mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                discover();
+            }
+        }, SERVICE_DISCOVERY_INTERVAL, SERVICE_DISCOVERY_INTERVAL, TimeUnit.MILLISECONDS);
+    }
+
+    private void discover() {
         mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 Log.i(WiFiDirect.TAG, "Discovery started");
-                Date date = new Date(System.currentTimeMillis() + mInterval);
-                Log.d(WiFiDirect.TAG, "Next discovery: " + date);
-
-                mExecutor.scheduleAtFixedRate(new Runnable() {
-                    @Override
-                    public void run() {
-                        clearLocalServicesAndServiceRequests();
-                        mState = State.STOP;
-                        start();
-                    }
-                }, mInterval, mInterval, TimeUnit.MILLISECONDS);
             }
 
             @Override
@@ -185,24 +147,7 @@ public class ServiceDiscoveryManager {
         });
     }
 
-    private void computeNextExecutorInterval() {
-        if (isNewDeviceFoundDuringLastFiveMinutes) {
-            mInterval = INITIAL_SERVICE_DISCOVERY_INTERVAL;
-            Log.d(WiFiDirect.TAG, "Interval: " + mInterval);
-            return;
-        }
-
-        if (mInterval * 2 >= 60000 * 60) {
-            // Max boundary up to 1 hours
-            mInterval = 60000 * 60;
-            Log.d(WiFiDirect.TAG, "Interval: " + mInterval);
-        } else {
-            mInterval *= 2;
-            Log.d(WiFiDirect.TAG, "Interval: " + mInterval);
-        }
-    }
-
-    private void clearLocalServicesAndServiceRequests() {
+    private void clearService() {
         // https://developer.android.com/reference/android/net/wifi/p2p/WifiP2pManager.html
         mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
             @Override
@@ -233,11 +178,27 @@ public class ServiceDiscoveryManager {
         });
     }
 
-    public void stop() {
-        clearLocalServicesAndServiceRequests();
-        mState = State.STOP;
-        mExecutor.shutdown();
+    public void stopDiscovery() {
+        if (mExecutor != null)
+            mExecutor.shutdown();
+
         mExecutor = null;
+
+        clearService();
+
+        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                // Nothing
+                Log.i(WiFiDirect.TAG, "Stop peer discovery succeeded");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.e(WiFiDirect.TAG, "Stop peer discovery failed: " +
+                        WiFiDirect.getActionListenerFailureName(reason));
+            }
+        });
     }
 
     private boolean isValidDnsSdTxtRecord(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {

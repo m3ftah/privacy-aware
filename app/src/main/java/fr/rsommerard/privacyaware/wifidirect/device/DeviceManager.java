@@ -21,20 +21,10 @@ import fr.rsommerard.privacyaware.dao.DeviceDao;
 
 public class DeviceManager {
 
-    private static DeviceManager sInstance;
-
     private final Random mRandom;
     private final DeviceDao mDeviceDao;
 
-    public static DeviceManager getInstance(final Context context) {
-        if (sInstance == null) {
-            sInstance = new DeviceManager(context);
-        }
-
-        return sInstance;
-    }
-
-    private DeviceManager(final Context context) {
+    public DeviceManager(final Context context) {
         DevOpenHelper helper = new DevOpenHelper(context, "privacy-aware-db", null);
         SQLiteDatabase mDb = helper.getWritableDatabase();
         DaoMaster mDaoMaster = new DaoMaster(mDb);
