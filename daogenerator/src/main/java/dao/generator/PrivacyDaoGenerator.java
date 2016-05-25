@@ -10,8 +10,19 @@ public class PrivacyDaoGenerator {
         schema.enableKeepSectionsByDefault();
 
         createDataTable(schema);
+        createDevicesTable(schema);
 
         new DaoGenerator().generateAll(schema, "app/src/main/java");
+    }
+
+    private static void createDevicesTable(Schema schema) {
+        Entity devices = schema.addEntity("Device");
+
+        devices.addIdProperty();
+        devices.addStringProperty("name").notNull();
+        devices.addStringProperty("address").notNull().unique().index();
+        devices.addStringProperty("port").notNull();
+        devices.addStringProperty("timestamp").notNull();
     }
 
     private static void createDataTable(Schema schema) {
@@ -21,6 +32,5 @@ public class PrivacyDaoGenerator {
 
         data.addIdProperty();
         data.addStringProperty("content").notNull();
-        data.addIntProperty("color");
     }
 }

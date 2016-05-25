@@ -10,23 +10,18 @@
     android:orientation="vertical"
     tools:context="fr.rsommerard.privacyaware.MainActivity">
 
-    <ListView
-        android:id="@+id/listview_data"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1" />
-
     <Button
-        android:id="@+id/button_show_peers"
+        android:id="@+id/button_start_discovery"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:text="@string/peers_available" />
+        android:layout_weight="1"
+        android:text="@string/start_discovery" />
 
     <Button
-        android:id="@+id/button_send_data"
+        android:id="@+id/button_stop_discovery"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:text="@string/send_data" />
+        android:layout_weight="1"
+        android:text="@string/stop_discovery" />
+
 </LinearLayout>

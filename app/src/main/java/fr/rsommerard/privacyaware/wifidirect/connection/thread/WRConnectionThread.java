@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
@@ -18,8 +19,6 @@ import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
  */
 public class WRConnectionThread extends Thread implements Runnable {
 
-    private static final String TAG = "PAWRCT";
-
     private final ServerSocket mServerSocket;
     private final DataManager mDataManager;
     private final ConnectionManager mConnectionManager;
@@ -27,7 +26,7 @@ public class WRConnectionThread extends Thread implements Runnable {
     private Socket mSocket;
 
     public WRConnectionThread(final Context context, final ServerSocket serverSocket) {
-        Log.i(TAG, "WRConnectionThread(ServerSocket serverSocket)");
+        Log.i(WiFiDirect.TAG, "WRConnectionThread(ServerSocket serverSocket)");
 
         mServerSocket = serverSocket;
         mDataManager = DataManager.getInstance(context);
@@ -36,7 +35,7 @@ public class WRConnectionThread extends Thread implements Runnable {
 
     @Override
     public void run() {
-        Log.i(TAG, "run()");
+        Log.i(WiFiDirect.TAG, "run()");
 
         try {
             process();
@@ -49,14 +48,14 @@ public class WRConnectionThread extends Thread implements Runnable {
     }
 
     private void process() throws Exception {
-        Log.i(TAG, "process()");
+        Log.i(WiFiDirect.TAG, "process()");
 
         mSocket = mServerSocket.accept();
 
         ObjectInputStream objectInputStream = new ObjectInputStream(mSocket.getInputStream());
         Data data = (Data) objectInputStream.readObject();
 
-        Log.d(TAG, "Received \"" + data.getContent() + "\"");
+        Log.d(WiFiDirect.TAG, "Received \"" + data.getContent() + "\"");
 
         data.setId(null);
         mDataManager.addData(data);
@@ -69,7 +68,7 @@ public class WRConnectionThread extends Thread implements Runnable {
     }
 
     private void exitProperly() {
-        Log.i(TAG, "exitProperly()");
+        Log.i(WiFiDirect.TAG, "exitProperly()");
 
         if (mSocket != null) {
             if (mSocket.isConnected()) {

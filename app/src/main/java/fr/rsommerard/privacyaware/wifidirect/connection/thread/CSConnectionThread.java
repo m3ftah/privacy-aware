@@ -9,27 +9,26 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
+import fr.rsommerard.privacyaware.dao.Device;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
-import fr.rsommerard.privacyaware.wifidirect.peer.Peer;
 
 /**
  * Connect and Send Connection Thread
  */
 public class CSConnectionThread extends Thread implements Runnable {
 
-    private static final String TAG = "PACSCT";
-
     private final DataManager mDataManager;
-    private final Peer mPeer;
+    private final Device mDevice;
     private final Socket mSocket;
     private final ConnectionManager mConnectionManager;
 
-    public CSConnectionThread(final Context context, final Peer peer) {
-        Log.i(TAG, "CSConnectionThread(ConnectionManager connectionManager, Peer peer)");
+    public CSConnectionThread(final Context context, final Device device) {
+        Log.i(WiFiDirect.TAG, "CSConnectionThread(ConnectionManager connectionManager, Device peer)");
 
-        mPeer = peer;
+        mDevice = device;
         mDataManager = DataManager.getInstance(context);
         mConnectionManager = ConnectionManager.getInstance(context);
         mSocket = new Socket();
@@ -37,7 +36,7 @@ public class CSConnectionThread extends Thread implements Runnable {
 
     @Override
     public void run() {
-        Log.i(TAG, "run()");
+        Log.i(WiFiDirect.TAG, "run()");
 
         sleepBeforeProcess();
 
@@ -52,7 +51,7 @@ public class CSConnectionThread extends Thread implements Runnable {
     }
 
     private void sleepBeforeProcess() {
-        Log.i(TAG, "sleepBeforeProcess()");
+        Log.i(WiFiDirect.TAG, "sleepBeforeProcess()");
 
         try {
             sleep(5000);
@@ -62,15 +61,15 @@ public class CSConnectionThread extends Thread implements Runnable {
     }
 
     private void process() throws Exception {
-        Log.i(TAG, "process()");
+        Log.i(WiFiDirect.TAG, "process()");
 
-        mSocket.bind(null);
-        Log.d(TAG, mPeer.getLocalAddress() + ":" + mPeer.getPort());
-        mSocket.connect(new InetSocketAddress(mPeer.getLocalAddress(), mPeer.getPort()), 0);
+        /*mSocket.bind(null);
+        Log.d(WiFiDirect.TAG, mDevice.getLocalAddress() + ":" + mDevice.getPort());
+        mSocket.connect(new InetSocketAddress(mDevice.getLocalAddress(), mDevice.getPort()), 0);
 
         Data data = mDataManager.getData();
 
-        Log.d(TAG, "Sending \"" + data.getContent() + "\"");
+        Log.d(WiFiDirect.TAG, "Sending \"" + data.getContent() + "\"");
 
         if (data == null) {
             return;
@@ -84,15 +83,15 @@ public class CSConnectionThread extends Thread implements Runnable {
         String ack = (String) objectInputStream.readObject();
 
         if ("ACK".equals(ack)) {
-            Log.d(TAG, "ACK received");
+            Log.d(WiFiDirect.TAG, "ACK received");
             mDataManager.removeData(data);
         }
 
-        mConnectionManager.disconnect();
+        mConnectionManager.disconnect();*/
     }
 
     private void exitProperly() {
-        Log.i(TAG, "exitProperly()");
+        Log.i(WiFiDirect.TAG, "exitProperly()");
 
         if (mSocket.isConnected()) {
             try {

@@ -12,7 +12,6 @@ public class Data implements java.io.Serializable {
     private Long id;
     /** Not-null value. */
     private String content;
-    private Integer color;
 
     // KEEP FIELDS - put your custom fields here
     // KEEP FIELDS END
@@ -24,10 +23,9 @@ public class Data implements java.io.Serializable {
         this.id = id;
     }
 
-    public Data(Long id, String content, Integer color) {
+    public Data(Long id, String content) {
         this.id = id;
         this.content = content;
-        this.color = color;
     }
 
     public Long getId() {
@@ -46,14 +44,6 @@ public class Data implements java.io.Serializable {
     /** Not-null value; ensure this value is available before it is saved to the database. */
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public Integer getColor() {
-        return color;
-    }
-
-    public void setColor(Integer color) {
-        this.color = color;
     }
 
     // KEEP METHODS - put your custom methods here
