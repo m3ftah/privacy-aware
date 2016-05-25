@@ -91,6 +91,7 @@ public class Device {
         StringBuilder str = new StringBuilder("[");
 
         str.append("id: ").append(id).append(", ");
+        str.append("name: ").append(name).append(", ");
         str.append("address: ").append(address).append(", ");
         str.append("port: ").append(port).append(", ");
         str.append("timestamp: ").append(timestamp);

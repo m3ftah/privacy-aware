@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import fr.rsommerard.privacyaware.wifidirect.WiFiDirectManager;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
+import fr.rsommerard.privacyaware.wifidirect.exception.NotStartedException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,29 +32,59 @@ public class MainActivity extends AppCompatActivity {
             System.exit(1);
         }
 
-        Button startDiscoveryButton = (Button) findViewById(R.id.button_start_discovery);
-        assert startDiscoveryButton != null;
-        startDiscoveryButton.setOnClickListener(new View.OnClickListener() {
+        Button startButton = (Button) findViewById(R.id.button_start);
+        assert startButton != null;
+        startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this,
-                        "Start discovery",
+                        "Start",
                         Toast.LENGTH_SHORT).show();
 
-                mWiFiDirectManager.start();
+                mWiFiDirectManager.start(MainActivity.this);
             }
         });
 
-        Button stopDiscoveryButton = (Button) findViewById(R.id.button_stop_discovery);
-        assert stopDiscoveryButton != null;
-        stopDiscoveryButton.setOnClickListener(new View.OnClickListener() {
+        Button stopButton = (Button) findViewById(R.id.button_stop);
+        assert stopButton != null;
+        stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this,
-                        "Stop discovery",
+                        "Stop",
                         Toast.LENGTH_SHORT).show();
 
-                mWiFiDirectManager.stop();
+                mWiFiDirectManager.stop(MainActivity.this);
+            }
+        });
+
+        Button connectButton = (Button) findViewById(R.id.button_connect);
+        assert connectButton != null;
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this,
+                        "Connect",
+                        Toast.LENGTH_SHORT).show();
+
+                try {
+                    mWiFiDirectManager.connect();
+                } catch (NotStartedException e) {
+                    // Nothing
+                }
+            }
+        });
+
+        Button disconnectButton = (Button) findViewById(R.id.button_disconnect);
+        assert disconnectButton != null;
+        disconnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this,
+                        "Disconnect",
+                        Toast.LENGTH_SHORT).show();
+
+                mWiFiDirectManager.disconnect();
             }
         });
     }
@@ -61,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Log.i(WiFiDirect.TAG, "onDestroy()");
-        mWiFiDirectManager.stop();
+        mWiFiDirectManager.stop(MainActivity.this);
         super.onDestroy();
     }
 

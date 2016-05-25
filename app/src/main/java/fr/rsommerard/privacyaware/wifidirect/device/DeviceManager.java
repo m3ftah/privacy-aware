@@ -41,7 +41,7 @@ public class DeviceManager {
         return devices.get(mRandom.nextInt(devices.size()));
     }
 
-    public Device getDevice(Device device) {
+    public Device getDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -58,7 +58,7 @@ public class DeviceManager {
         return mDeviceDao.count() != 0;
     }
 
-    public boolean containDevice(Device device) {
+    public boolean containDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -67,7 +67,7 @@ public class DeviceManager {
         return query.unique() != null;
     }
 
-    public void updateDevice(Device device) {
+    public void updateDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
