@@ -10,7 +10,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.dao.Device;
+import fr.rsommerard.privacyaware.data.DataManager;
 
 public abstract class WiFiDirect {
 
@@ -20,6 +22,13 @@ public abstract class WiFiDirect {
         Random rand = new Random();
 
         return Integer.toString(rand.nextInt(100000));
+    }
+
+    public static void populateDataTable(final DataManager dataManager, final int nbData) {
+        for (int i = 0; i < nbData; i++) {
+            Data d = new Data(null, getRandomContent());
+            dataManager.addData(d);
+        }
     }
 
     public static String getRandomContent() {
@@ -119,6 +128,26 @@ public abstract class WiFiDirect {
         str.append("]");
 
         Log.i(WiFiDirect.TAG, str.toString());
+        return str.toString();
+    }
+
+    public static String dataListToString(List<Data> data) {
+        int size = data.size();
+        Log.i(WiFiDirect.TAG, "Nb data: " + size);
+
+        StringBuilder str = new StringBuilder("[");
+
+        if (!data.isEmpty()) {
+            str.append(data.get(0).getContent());
+
+            for (int i = 1; i < size; i++) {
+                str.append(", ");
+                str.append(data.get(i).getContent());
+            }
+        }
+
+        str.append("]");
+
         return str.toString();
     }
 }

@@ -1,12 +1,9 @@
 package fr.rsommerard.privacyaware.wifidirect.device;
 
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.os.Build;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricGradleTestRunner;
@@ -32,12 +29,11 @@ public class DeviceManagerTest {
 
     @Before
     public void setup() {
-        mDeviceManager = DeviceManager.getInstance(RuntimeEnvironment.application);
+        mDeviceManager = new DeviceManager(RuntimeEnvironment.application);
 
         Device device = new Device();
         device.setName("Android_ffa6");
         device.setAddress("7e:27:57:ae:57:ce");
-        device.setPort("42");
         device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
         mDeviceManager.addDevice(device);
@@ -52,7 +48,7 @@ public class DeviceManagerTest {
 
     @Test
     public void testSingleton() {
-        DeviceManager deviceManager = DeviceManager.getInstance(RuntimeEnvironment.application);
+        DeviceManager deviceManager = new DeviceManager(RuntimeEnvironment.application);
 
         assertEquals("should be equals", mDeviceManager, deviceManager);
     }
@@ -83,10 +79,9 @@ public class DeviceManagerTest {
         Device device = new Device();
         device.setName("Android_ffa6");
         device.setAddress("7e:27:57:ae:57:ce");
-        device.setPort("42");
         device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
-        assertTrue("should contain this device", mDeviceManager.containDevice(device));
+        assertTrue("should contain this device", mDeviceManager.containsDevice(device));
     }
 
     @Test
@@ -94,7 +89,6 @@ public class DeviceManagerTest {
         Device device = new Device();
         device.setName("Android_ffa6");
         device.setAddress("7e:27:57:ae:57:ce");
-        device.setPort("42");
         device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
         mDeviceManager.updateDevice(device);
@@ -115,7 +109,6 @@ public class DeviceManagerTest {
         Device device = new Device();
         device.setName("Android_bea6");
         device.setAddress("7e:27:57:be:57:ce");
-        device.setPort("42");
         device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
         return device;
@@ -125,7 +118,6 @@ public class DeviceManagerTest {
         Device device = new Device();
         device.setName("Android_ffa6");
         device.setAddress("7e:45:57:ae:43:ce");
-        device.setPort("645");
         device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
         return device;

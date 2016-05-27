@@ -6,32 +6,27 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
-import fr.rsommerard.privacyaware.wifidirect.exception.NotStartedException;
+import fr.rsommerard.privacyaware.wifidirect.exception.WiFiException;
 
 public class WiFiDirectManager {
-
-    private static final int PROCESS_INTERVAL = 60000;
 
     private final ServiceDiscoveryManager mServiceDiscoveryManager;
     private final WifiManager mWiFiManager;
     private final ConnectionManager mConnectionManager;
     private final DeviceManager mDeviceManager;
-    private boolean mIsStarted;
-
-//    private ScheduledExecutorService mExecutor;
+    private final DataManager mDataManager;
 
     private int mNetId;
 
-    public WiFiDirectManager(final Context context) throws IOException {
+    public WiFiDirectManager(final Context context) throws IOException, WiFiException {
         WifiP2pManager wiFiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
 
         WifiP2pManager.ChannelListener initializeChannelListener = new CustomChannelListener();
@@ -43,66 +38,40 @@ public class WiFiDirectManager {
 
         mWiFiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
+        if (!mWiFiManager.isWifiEnabled()) {
+            throw new WiFiException("The WiFi is not enabled.");
+        }
 
         mDeviceManager = new DeviceManager(context);
 
+        mDataManager = new DataManager(context);
+        WiFiDirect.populateDataTable(mDataManager, 3);
 
-        mConnectionManager = new ConnectionManager(wiFiP2pManager, wiFiP2pChannel);
+        disconnectWiFi();
 
-        String port = mConnectionManager.getServerSocketPort();
-        mServiceDiscoveryManager = new ServiceDiscoveryManager(wiFiP2pManager, wiFiP2pChannel, mDeviceManager, port);
+        mServiceDiscoveryManager = new ServiceDiscoveryManager(wiFiP2pManager, wiFiP2pChannel, mDeviceManager);
+        mServiceDiscoveryManager.startDiscovery();
 
-        mIsStarted = false;
+        mConnectionManager = new ConnectionManager(context, wiFiP2pManager, wiFiP2pChannel, mServiceDiscoveryManager, mDataManager);
+    }
+
+    public void process() {
+        if (mDeviceManager.hasDevices() && mDataManager.hasData()) {
+            mConnectionManager.connect(mDeviceManager.getDevice());
+        } else {
+            Log.d(WiFiDirect.TAG, "No device or data to send available");
+        }
     }
 
     // To be able to decide if we want to send or receive data. For instance, we can disable WiFi-Direct
     // data sharing when user is in a POI.
-    public void start(final Context context) {
-        if (mIsStarted) {
-            return;
-        }
-
-        disconnectWiFi();
-
-        mServiceDiscoveryManager.startDiscovery();
-        mConnectionManager.start(context);
-
-//        mExecutor = Executors.newSingleThreadScheduledExecutor();
-//
-//        mExecutor.scheduleAtFixedRate(new Runnable() {
-//            @Override
-//            public void run() {
-//                //process();
-//            }
-//        }, PROCESS_INTERVAL, PROCESS_INTERVAL, TimeUnit.MILLISECONDS);
-
-        mIsStarted = true;
-    }
-
-    // TODO: make it private and rename it to process()
-    public void connect() throws NotStartedException {
-        if (!mIsStarted) {
-            throw new NotStartedException();
-        }
-
-        if (mDeviceManager.hasDevices()) {
-            mConnectionManager.connect(mDeviceManager.getDevice());
-        } else {
-            Log.d(WiFiDirect.TAG, "No device available");
-        }
-    }
-
-    public void disconnect() {
-        mConnectionManager.disconnect();
-    }
-
     public void stop(final Context context) {
         mConnectionManager.stop(context);
-        mServiceDiscoveryManager.stopDiscovery();
+        mServiceDiscoveryManager.stop();
+
+        mDeviceManager.deleteAll();
 
         reconnectWiFi();
-
-        mIsStarted = false;
     }
 
     private void disconnectWiFi() {
@@ -115,6 +84,12 @@ public class WiFiDirectManager {
     private void reconnectWiFi() {
         if (mNetId != -1)
             mWiFiManager.enableNetwork(mNetId, true);
+    }
+
+    public void printData() {
+        String str = WiFiDirect.dataListToString(mDataManager.getAllData());
+
+        Log.i(WiFiDirect.TAG, str);
     }
 
     private class CustomChannelListener implements WifiP2pManager.ChannelListener {

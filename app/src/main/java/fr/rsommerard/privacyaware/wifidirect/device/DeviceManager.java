@@ -21,6 +21,8 @@ import fr.rsommerard.privacyaware.dao.DeviceDao;
 
 public class DeviceManager {
 
+    private static final int AVAILABILITY = 120000;
+
     private final Random mRandom;
     private final DeviceDao mDeviceDao;
 
@@ -55,10 +57,16 @@ public class DeviceManager {
     }
 
     public boolean hasDevices() {
-        return mDeviceDao.count() != 0;
+        long limit = System.currentTimeMillis() - AVAILABILITY;
+        QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
+        qBuilder.where(DeviceDao.Properties.Timestamp.gt(limit));
+
+        Query<Device> query = qBuilder.build();
+
+        return query.list().size() != 0;
     }
 
-    public boolean containDevice(final Device device) {
+    public boolean containsDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -83,5 +91,9 @@ public class DeviceManager {
     public void addDevice(final Device device) {
         mDeviceDao.insert(device);
         Log.i(WiFiDirect.TAG, "Insert " + device.toString());
+    }
+
+    public void deleteAll() {
+        mDeviceDao.deleteAll();
     }
 }

@@ -6,7 +6,6 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.util.Log;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,91 +20,121 @@ public class ServiceDiscoveryManager {
     private static final String SERVICE_NAME = "_rsp2p";
     private static final String SERVICE_TYPE = "_tcp";
 
-    private static final int SERVICE_DISCOVERY_INTERVAL =  11000;
+    private static final int SERVICE_DISCOVERY_INTERVAL =  17000;
 
     private final DeviceManager mDeviceManager;
+    private WifiP2pDnsSdServiceInfo mWifiP2pDnsSdServiceInfo;
+    private CustomActionListener mAddLocalServiceActionListener;
+    private CustomDnsSdServiceResponseListener mDnsSdServiceResponseListener;
+    private CustomDnsSdTxtRecordListener mDnsSdTxtRecordListener;
+    private WifiP2pDnsSdServiceRequest mWifiP2pDnsSdServiceRequest;
+    private CustomActionListener mAddServiceRequestActionListener;
+    private CustomActionListener mClearLocalServicesActionListener;
+    private CustomActionListener mClearServiceRequestsActionListener;
+    private CustomActionListener mDiscoverServicesActionListener;
+    private CustomActionListener mStopPeerDiscoveryActionListener;
     private ScheduledExecutorService mExecutor;
 
     private final WifiP2pManager mWiFiP2pManager;
     private final WifiP2pManager.Channel mWiFiP2pChannel;
 
-    private final String mServerPort;
+    private int mDiscoveryFailedCounter;
 
     public ServiceDiscoveryManager(final WifiP2pManager manager,
                                    final WifiP2pManager.Channel channel,
-                                   final DeviceManager deviceManager,
-                                   final String serverPort) {
+                                   final DeviceManager deviceManager) {
 
         mWiFiP2pManager = manager;
         mWiFiP2pChannel = channel;
 
-        mServerPort = serverPort;
-
         mDeviceManager = deviceManager;
 
-        clearService();
+        initialize();
+    }
+
+    public void initialize() {
+        Log.d(WiFiDirect.TAG, "initialize()");
+
+        mWifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, null);
+        mAddLocalServiceActionListener = new CustomActionListener(null, "Add local service failed: ");
+        mDnsSdServiceResponseListener = new CustomDnsSdServiceResponseListener();
+        mDnsSdTxtRecordListener = new CustomDnsSdTxtRecordListener();
+
+        mWifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        mAddServiceRequestActionListener = new CustomActionListener(null, "Add service request failed: ");
+
+        mClearLocalServicesActionListener = new CustomActionListener(null, "Clear local service failed: ");
+        mClearServiceRequestsActionListener = new CustomActionListener(null, "Clear service requests failed: ");
+
+        mDiscoverServicesActionListener = new DiscoverServicesActionListener(null, "Discovery failed: ");
+
+        mStopPeerDiscoveryActionListener = new CustomActionListener(null, "Stop peer discovery failed: ");
+
+        mDiscoveryFailedCounter = 0;
     }
 
     public void startDiscovery() {
+        Log.d(WiFiDirect.TAG, "Start service discovery");
+
         if (mExecutor != null) {
-            Log.i(WiFiDirect.TAG, "Discovery already started");
+            Log.i(WiFiDirect.TAG, "Service discovery already started");
             return;
         }
 
-        Map<String, String> record = new HashMap<>();
-        record.put("port", mServerPort);
-
-        WifiP2pDnsSdServiceInfo wifiP2pDnsSdServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(SERVICE_NAME, SERVICE_TYPE, record);
-
-        WifiP2pManager.ActionListener addLocalServiceActionListener = new CustomActionListener(null, "Add local service failed: ");
-        mWiFiP2pManager.addLocalService(mWiFiP2pChannel, wifiP2pDnsSdServiceInfo, addLocalServiceActionListener);
-
-        WifiP2pManager.DnsSdServiceResponseListener dnsSdServiceResponseListener = new CustomDnsSdServiceResponseListener();
-        CustomDnsSdTxtRecordListener dnsSdTxtRecordListener = new CustomDnsSdTxtRecordListener();
-        mWiFiP2pManager.setDnsSdResponseListeners(mWiFiP2pChannel, dnsSdServiceResponseListener, dnsSdTxtRecordListener);
-
-        WifiP2pDnsSdServiceRequest wifiP2pDnsSdServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-
-        WifiP2pManager.ActionListener addServiceRequestActionListener = new CustomActionListener(null, "Add service request failed: ");
-        mWiFiP2pManager.addServiceRequest(mWiFiP2pChannel, wifiP2pDnsSdServiceRequest, addServiceRequestActionListener);
-
         mExecutor = Executors.newSingleThreadScheduledExecutor();
+
+        // https://developer.android.com/reference/android/net/wifi/p2p/WifiP2pManager.html
+        mWiFiP2pManager.clearLocalServices(mWiFiP2pChannel, mClearLocalServicesActionListener);
+        mWiFiP2pManager.clearServiceRequests(mWiFiP2pChannel, mClearServiceRequestsActionListener);
+
+        mWiFiP2pManager.stopPeerDiscovery(mWiFiP2pChannel, mStopPeerDiscoveryActionListener);
+
+        mWiFiP2pManager.addLocalService(mWiFiP2pChannel, mWifiP2pDnsSdServiceInfo, mAddLocalServiceActionListener);
+        mWiFiP2pManager.setDnsSdResponseListeners(mWiFiP2pChannel, mDnsSdServiceResponseListener, mDnsSdTxtRecordListener);
+        mWiFiP2pManager.addServiceRequest(mWiFiP2pChannel, mWifiP2pDnsSdServiceRequest, mAddServiceRequestActionListener);
 
         mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 discover();
             }
-        }, SERVICE_DISCOVERY_INTERVAL, SERVICE_DISCOVERY_INTERVAL, TimeUnit.MILLISECONDS);
+        }, 0, SERVICE_DISCOVERY_INTERVAL, TimeUnit.MILLISECONDS);
+    }
+
+    public boolean isServiceDiscoveryStarted() {
+        return mExecutor != null;
     }
 
     private void discover() {
-        WifiP2pManager.ActionListener discoverServicesActionListener = new CustomActionListener(null, "Discovery failed: ");
-        mWiFiP2pManager.discoverServices(mWiFiP2pChannel, discoverServicesActionListener);
-    }
-
-    private void clearService() {
-        // https://developer.android.com/reference/android/net/wifi/p2p/WifiP2pManager.html
-        WifiP2pManager.ActionListener clearLocalServicesActionListener = new CustomActionListener(null, "Clear local service failed: ");
-        mWiFiP2pManager.clearLocalServices(mWiFiP2pChannel, clearLocalServicesActionListener );
-
-        WifiP2pManager.ActionListener clearServiceRequestsActionListener = new CustomActionListener(null, "Clear service requests failed: ");
-        mWiFiP2pManager.clearServiceRequests(mWiFiP2pChannel, clearServiceRequestsActionListener);
+        mWiFiP2pManager.discoverServices(mWiFiP2pChannel, mDiscoverServicesActionListener);
     }
 
     public void stopDiscovery() {
+        Log.d(WiFiDirect.TAG, "Stop service discovery");
         if (mExecutor != null)
             mExecutor.shutdown();
 
         mExecutor = null;
 
-        clearService();
+        // https://developer.android.com/reference/android/net/wifi/p2p/WifiP2pManager.html
+        mWiFiP2pManager.clearLocalServices(mWiFiP2pChannel, mClearLocalServicesActionListener);
+        mWiFiP2pManager.clearServiceRequests(mWiFiP2pChannel, mClearServiceRequestsActionListener);
 
-        WifiP2pManager.ActionListener stopPeerDiscoveryActionListener = new CustomActionListener(null, "Stop peer discovery failed: ");
-        mWiFiP2pManager.stopPeerDiscovery(mWiFiP2pChannel, stopPeerDiscoveryActionListener);
+        mDiscoveryFailedCounter = 0;
     }
 
-    private boolean isValidDnsSdTxtRecord(final String fullDomainName, final Map<String, String> txtRecordMap, final WifiP2pDevice srcDevice) {
+    private void restart() {
+        stop();
+        initialize();
+        startDiscovery();
+    }
+
+    public void stop() {
+        stopDiscovery();
+        mWiFiP2pManager.stopPeerDiscovery(mWiFiP2pChannel, mStopPeerDiscoveryActionListener);
+    }
+
+    private boolean isValidDnsSdTxtRecord(final String fullDomainName, final WifiP2pDevice srcDevice) {
         if (fullDomainName == null ||
                 !fullDomainName.contains(SERVICE_NAME + "." + SERVICE_TYPE)) {
             return false;
@@ -121,13 +150,23 @@ public class ServiceDiscoveryManager {
             return false;
         }
 
-        if (txtRecordMap == null ||
-                !txtRecordMap.containsKey("port") ||
-                txtRecordMap.get("port") == null) {
-            return false;
+        return true;
+    }
+
+    private class DiscoverServicesActionListener extends CustomActionListener {
+
+        public DiscoverServicesActionListener(String onSuccessMessage, String onFailureMessage) {
+            super(onSuccessMessage, onFailureMessage);
         }
 
-        return true;
+        @Override
+        public void onFailure(int reason) {
+            super.onFailure(reason);
+            mDiscoveryFailedCounter++;
+            if (mDiscoveryFailedCounter >= 3) {
+                restart();
+            }
+        }
     }
 
     private class CustomDnsSdServiceResponseListener implements WifiP2pManager.DnsSdServiceResponseListener {
@@ -145,14 +184,13 @@ public class ServiceDiscoveryManager {
             // Log.i(WiFiDirect.TAG, srcDevice.toString());
             Log.i(WiFiDirect.TAG, srcDevice.deviceName + " available");
 
-            if (isValidDnsSdTxtRecord(fullDomainName, txtRecordMap, srcDevice)) {
+            if (isValidDnsSdTxtRecord(fullDomainName, srcDevice)) {
                 Device device = new Device();
                 device.setName(srcDevice.deviceName);
                 device.setAddress(srcDevice.deviceAddress);
-                device.setPort(txtRecordMap.get("port"));
                 device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
-                if (mDeviceManager.containDevice(device)) {
+                if (mDeviceManager.containsDevice(device)) {
                     mDeviceManager.updateDevice(device);
                 } else {
                     mDeviceManager.addDevice(device);

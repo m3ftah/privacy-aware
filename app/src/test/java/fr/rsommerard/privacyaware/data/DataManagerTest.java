@@ -28,7 +28,7 @@ public class DataManagerTest {
 
     @Before
     public void setup() {
-        mDataManager = DataManager.getInstance(RuntimeEnvironment.application);
+        mDataManager = new DataManager(RuntimeEnvironment.application);
 
         Data data = new Data();
         data.setContent("This is the initial data.");
@@ -44,7 +44,7 @@ public class DataManagerTest {
 
     @Test
     public void testSingleton() {
-        DataManager dataManager = DataManager.getInstance(RuntimeEnvironment.application);
+        DataManager dataManager = new DataManager(RuntimeEnvironment.application);
 
         assertEquals("should be the same reference", mDataManager, dataManager);
     }
