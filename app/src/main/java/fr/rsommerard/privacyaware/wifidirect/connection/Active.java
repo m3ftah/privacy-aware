@@ -1,5 +1,6 @@
 package fr.rsommerard.privacyaware.wifidirect.connection;
 
+import android.database.sqlite.SQLiteConstraintException;
 import android.util.Log;
 
 import java.io.IOException;
@@ -8,8 +9,13 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 
 public class Active extends Thread implements Runnable {
@@ -17,10 +23,13 @@ public class Active extends Thread implements Runnable {
 
     private final InetAddress mGroupOwnerAddress;
     private final DataManager mDataManager;
+    private final Random mRandom;
 
     public Active(final InetAddress groupOwnerAddress, final DataManager dataManager) {
         mGroupOwnerAddress = groupOwnerAddress;
         mDataManager = dataManager;
+
+        mRandom = new Random();
     }
 
     @Override
@@ -35,9 +44,56 @@ public class Active extends Thread implements Runnable {
         try {
             sendMessage(socket, Protocol.HELLO);
             waitAndCheck(socket, Protocol.HELLO);
+            sendData(socket);
+            waitData(socket);
             socket.close();
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (ClassNotFoundException | IOException | SQLiteConstraintException e) {
             e.printStackTrace();
+            closeSocket(socket);
+        }
+    }
+
+    private void waitData(Socket socket) throws IOException, ClassNotFoundException, SQLiteConstraintException {
+        sendMessage(socket, Protocol.SEND);
+
+        ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+        String gsonStr = (String) objectInputStream.readObject();
+
+        List<Data> data = DataManager.deGsonify(gsonStr);
+
+        Log.i(WiFiDirect.TAG, data + " received");
+
+        for (Data d : data) {
+            mDataManager.addData(d);
+        }
+
+        sendMessage(socket, Protocol.ACK);
+    }
+
+    private void sendData(final Socket socket) throws IOException, ClassNotFoundException {
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+
+        List<Data> data = mDataManager.getAllData();
+        Collections.shuffle(data);
+
+        int nb = mRandom.nextInt(data.size());
+        Log.i(WiFiDirect.TAG, "Nb data to send: " + nb);
+
+        List<Data> dataList = new ArrayList<Data>();
+        for (int i = 0; i < nb; i++) {
+            dataList.add(new Data(null, data.get(i).getContent()));
+        }
+
+        waitAndCheck(socket, Protocol.SEND);
+        objectOutputStream.writeObject(DataManager.gsonify(dataList));
+        objectOutputStream.flush();
+
+        Log.d(WiFiDirect.TAG, DataManager.gsonify(dataList) + " sent");
+
+        waitAndCheck(socket, Protocol.ACK);
+
+        for (int i = 0; i < nb; i++) {
+            mDataManager.removeData(data.get(i));
         }
     }
 
@@ -56,21 +112,6 @@ public class Active extends Thread implements Runnable {
 
         Log.i(WiFiDirect.TAG, message + " sent");
     }
-
-    /*private void sendData(final Socket socket) throws IOException, ClassNotFoundException {
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-
-        Data data = mDataManager.getData();
-
-        Data dataCleaned = new Data(null, data.getContent());
-        objectOutputStream.writeObject(dataCleaned);
-        objectOutputStream.flush();
-
-        Log.d(WiFiDirect.TAG, data + " sent");
-
-        waitAndCheck(socket, Protocol.ACK);
-        mDataManager.removeData(data);
-    }*/
 
     private void waitAndCheck(final Socket socket, final String message) throws IOException, ClassNotFoundException {
         ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());

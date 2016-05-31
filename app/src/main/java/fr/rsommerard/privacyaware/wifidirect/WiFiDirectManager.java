@@ -45,7 +45,7 @@ public class WiFiDirectManager {
         mDeviceManager = new DeviceManager(context);
 
         mDataManager = new DataManager(context);
-        WiFiDirect.populateDataTable(mDataManager, 3);
+        WiFiDirect.populateDataTable(mDataManager, 5);
 
         disconnectWiFi();
 

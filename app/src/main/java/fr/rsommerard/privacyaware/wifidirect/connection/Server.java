@@ -5,7 +5,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import fr.rsommerard.privacyaware.data.DataManager;
-import fr.rsommerard.privacyaware.wifidirect.ServiceDiscoveryManager;
 
 public class Server extends Thread implements Runnable {
 

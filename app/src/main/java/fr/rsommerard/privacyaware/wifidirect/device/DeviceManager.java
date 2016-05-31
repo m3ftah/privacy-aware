@@ -11,6 +11,7 @@ import fr.rsommerard.privacyaware.dao.DaoMaster;
 import fr.rsommerard.privacyaware.dao.DaoMaster.DevOpenHelper;
 import fr.rsommerard.privacyaware.dao.DaoSession;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +24,7 @@ public class DeviceManager {
 
     private static final int AVAILABILITY = 120000;
 
-    private final Random mRandom;
+    private final SecureRandom mRandom;
     private final DeviceDao mDeviceDao;
 
     public DeviceManager(final Context context) {
@@ -35,7 +36,7 @@ public class DeviceManager {
 
         mDeviceDao.deleteAll(); // TODO: Delete this line
 
-        mRandom = new Random();
+        mRandom = new SecureRandom();
     }
 
     public Device getDevice() {
