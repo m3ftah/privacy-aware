@@ -24,7 +24,7 @@ import fr.rsommerard.privacyaware.wifidirect.ServiceDiscoveryManager;
 
 public class ConnectionManager {
 
-    private static final int CONNECTION_TIMEOUT = 60000;
+    private static final int CONNECTION_TIMEOUT = 120000;
 
     private final WifiP2pManager mWifiP2pManager;
     private final WifiP2pManager.Channel mWifiP2pChannel;

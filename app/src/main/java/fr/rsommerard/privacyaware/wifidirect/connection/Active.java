@@ -19,7 +19,7 @@ import fr.rsommerard.privacyaware.dao.Data;
 import fr.rsommerard.privacyaware.data.DataManager;
 
 public class Active extends Thread implements Runnable {
-    private static final int SOCKET_TIMEOUT = 5000;
+    private static final int SOCKET_TIMEOUT = 10000;
 
     private final InetAddress mGroupOwnerAddress;
     private final DataManager mDataManager;
