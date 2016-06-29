@@ -21,7 +21,6 @@ public class PrivacyDaoGenerator {
         devices.addIdProperty();
         devices.addStringProperty("name").notNull();
         devices.addStringProperty("address").notNull().unique().index();
-        devices.addStringProperty("port").notNull();
         devices.addStringProperty("timestamp").notNull();
     }
 

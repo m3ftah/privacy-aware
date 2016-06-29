@@ -11,6 +11,7 @@ import fr.rsommerard.privacyaware.dao.DaoMaster;
 import fr.rsommerard.privacyaware.dao.DaoMaster.DevOpenHelper;
 import fr.rsommerard.privacyaware.dao.DaoSession;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,7 +22,9 @@ import fr.rsommerard.privacyaware.dao.DeviceDao;
 
 public class DeviceManager {
 
-    private final Random mRandom;
+    private static final int AVAILABILITY = 120000;
+
+    private final SecureRandom mRandom;
     private final DeviceDao mDeviceDao;
 
     public DeviceManager(final Context context) {
@@ -33,7 +36,7 @@ public class DeviceManager {
 
         mDeviceDao.deleteAll(); // TODO: Delete this line
 
-        mRandom = new Random();
+        mRandom = new SecureRandom();
     }
 
     public Device getDevice() {
@@ -41,7 +44,7 @@ public class DeviceManager {
         return devices.get(mRandom.nextInt(devices.size()));
     }
 
-    public Device getDevice(Device device) {
+    public Device getDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -55,10 +58,16 @@ public class DeviceManager {
     }
 
     public boolean hasDevices() {
-        return mDeviceDao.count() != 0;
+        long limit = System.currentTimeMillis() - AVAILABILITY;
+        QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
+        qBuilder.where(DeviceDao.Properties.Timestamp.gt(limit));
+
+        Query<Device> query = qBuilder.build();
+
+        return query.list().size() != 0;
     }
 
-    public boolean containDevice(Device device) {
+    public boolean containsDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -67,7 +76,7 @@ public class DeviceManager {
         return query.unique() != null;
     }
 
-    public void updateDevice(Device device) {
+    public void updateDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -83,5 +92,9 @@ public class DeviceManager {
     public void addDevice(final Device device) {
         mDeviceDao.insert(device);
         Log.i(WiFiDirect.TAG, "Insert " + device.toString());
+    }
+
+    public void deleteAll() {
+        mDeviceDao.deleteAll();
     }
 }

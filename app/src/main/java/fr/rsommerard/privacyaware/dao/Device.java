@@ -15,8 +15,6 @@ public class Device {
     /** Not-null value. */
     private String address;
     /** Not-null value. */
-    private String port;
-    /** Not-null value. */
     private String timestamp;
 
     // KEEP FIELDS - put your custom fields here
@@ -29,11 +27,10 @@ public class Device {
         this.id = id;
     }
 
-    public Device(Long id, String name, String address, String port, String timestamp) {
+    public Device(Long id, String name, String address, String timestamp) {
         this.id = id;
         this.name = name;
         this.address = address;
-        this.port = port;
         this.timestamp = timestamp;
     }
 
@@ -66,16 +63,6 @@ public class Device {
     }
 
     /** Not-null value. */
-    public String getPort() {
-        return port;
-    }
-
-    /** Not-null value; ensure this value is available before it is saved to the database. */
-    public void setPort(String port) {
-        this.port = port;
-    }
-
-    /** Not-null value. */
     public String getTimestamp() {
         return timestamp;
     }
@@ -91,8 +78,8 @@ public class Device {
         StringBuilder str = new StringBuilder("[");
 
         str.append("id: ").append(id).append(", ");
+        str.append("name: ").append(name).append(", ");
         str.append("address: ").append(address).append(", ");
-        str.append("port: ").append(port).append(", ");
         str.append("timestamp: ").append(timestamp);
         str.append("]");
 

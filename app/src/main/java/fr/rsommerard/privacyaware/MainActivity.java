@@ -1,8 +1,5 @@
 package fr.rsommerard.privacyaware;
 
-import android.content.Context;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,7 +10,7 @@ import android.widget.Toast;
 import java.io.IOException;
 
 import fr.rsommerard.privacyaware.wifidirect.WiFiDirectManager;
-import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
+import fr.rsommerard.privacyaware.wifidirect.exception.WiFiException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,36 +21,70 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        try {
-            mWiFiDirectManager = new WiFiDirectManager(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        Button startDiscoveryButton = (Button) findViewById(R.id.button_start_discovery);
-        assert startDiscoveryButton != null;
-        startDiscoveryButton.setOnClickListener(new View.OnClickListener() {
+        Button startButton = (Button) findViewById(R.id.button_start);
+        assert startButton != null;
+        startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this,
-                        "Start discovery",
+                        "Start",
                         Toast.LENGTH_SHORT).show();
 
-                mWiFiDirectManager.start();
+                Log.i(WiFiDirect.TAG, "Start");
+
+                try {
+                    mWiFiDirectManager = new WiFiDirectManager(MainActivity.this);
+                } catch (IOException | WiFiException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
-        Button stopDiscoveryButton = (Button) findViewById(R.id.button_stop_discovery);
-        assert stopDiscoveryButton != null;
-        stopDiscoveryButton.setOnClickListener(new View.OnClickListener() {
+        Button stopButton = (Button) findViewById(R.id.button_stop);
+        assert stopButton != null;
+        stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainActivity.this,
-                        "Stop discovery",
+                        "Stop",
                         Toast.LENGTH_SHORT).show();
 
-                mWiFiDirectManager.stop();
+                Log.i(WiFiDirect.TAG, "Stop");
+
+                if (mWiFiDirectManager != null)
+                    mWiFiDirectManager.stop(MainActivity.this);
+            }
+        });
+
+        Button processButton = (Button) findViewById(R.id.button_process);
+        assert processButton != null;
+        processButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this,
+                        "Process",
+                        Toast.LENGTH_SHORT).show();
+
+                Log.i(WiFiDirect.TAG, "Process");
+
+                if (mWiFiDirectManager != null)
+                    mWiFiDirectManager.process();
+            }
+        });
+
+        Button dataButton = (Button) findViewById(R.id.button_data);
+        assert dataButton != null;
+        dataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this,
+                        "Data",
+                        Toast.LENGTH_SHORT).show();
+
+                Log.i(WiFiDirect.TAG, "Data");
+
+                if (mWiFiDirectManager != null)
+                    mWiFiDirectManager.printData();
             }
         });
     }
@@ -61,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         Log.i(WiFiDirect.TAG, "onDestroy()");
-        mWiFiDirectManager.stop();
+        if (mWiFiDirectManager != null)
+            mWiFiDirectManager.stop(MainActivity.this);
         super.onDestroy();
     }
 

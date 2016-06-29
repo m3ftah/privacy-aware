@@ -26,8 +26,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Name = new Property(1, String.class, "name", false, "NAME");
         public final static Property Address = new Property(2, String.class, "address", false, "ADDRESS");
-        public final static Property Port = new Property(3, String.class, "port", false, "PORT");
-        public final static Property Timestamp = new Property(4, String.class, "timestamp", false, "TIMESTAMP");
+        public final static Property Timestamp = new Property(3, String.class, "timestamp", false, "TIMESTAMP");
     };
 
 
@@ -46,8 +45,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
                 "\"NAME\" TEXT NOT NULL ," + // 1: name
                 "\"ADDRESS\" TEXT NOT NULL UNIQUE ," + // 2: address
-                "\"PORT\" TEXT NOT NULL ," + // 3: port
-                "\"TIMESTAMP\" TEXT NOT NULL );"); // 4: timestamp
+                "\"TIMESTAMP\" TEXT NOT NULL );"); // 3: timestamp
         // Add Indexes
         db.execSQL("CREATE INDEX " + constraint + "IDX_DEVICE_ADDRESS ON DEVICE" +
                 " (\"ADDRESS\");");
@@ -70,8 +68,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         }
         stmt.bindString(2, entity.getName());
         stmt.bindString(3, entity.getAddress());
-        stmt.bindString(4, entity.getPort());
-        stmt.bindString(5, entity.getTimestamp());
+        stmt.bindString(4, entity.getTimestamp());
     }
 
     /** @inheritdoc */
@@ -87,8 +84,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // name
             cursor.getString(offset + 2), // address
-            cursor.getString(offset + 3), // port
-            cursor.getString(offset + 4) // timestamp
+            cursor.getString(offset + 3) // timestamp
         );
         return entity;
     }
@@ -99,8 +95,7 @@ public class DeviceDao extends AbstractDao<Device, Long> {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setName(cursor.getString(offset + 1));
         entity.setAddress(cursor.getString(offset + 2));
-        entity.setPort(cursor.getString(offset + 3));
-        entity.setTimestamp(cursor.getString(offset + 4));
+        entity.setTimestamp(cursor.getString(offset + 3));
      }
     
     /** @inheritdoc */
