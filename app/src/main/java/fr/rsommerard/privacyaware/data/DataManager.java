@@ -8,6 +8,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.lang.reflect.Type;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -25,8 +28,9 @@ public class DataManager {
 
     private final SecureRandom mRandom;
     private final DataDao mDataDao;
+    private final EventBus mEventBus;
 
-    public DataManager(final Context context) {
+    public DataManager(final Context context, final EventBus eventBus) {
         DevOpenHelper helper = new DevOpenHelper(context, "privacy-aware-db", null);
         SQLiteDatabase mDb = helper.getWritableDatabase();
         DaoMaster mDaoMaster = new DaoMaster(mDb);
@@ -36,6 +40,9 @@ public class DataManager {
         mDataDao.deleteAll(); // TODO: Delete this line
 
         mRandom = new SecureRandom();
+
+        mEventBus = eventBus;
+        mEventBus.register(this);
     }
 
     public Data getData() {
@@ -62,6 +69,10 @@ public class DataManager {
     public void addData(final Data data) {
         mDataDao.insert(data);
         Log.i(WiFiDirect.TAG, "Insert " + data.toString());
+
+        if (mRandom.nextBoolean()) {
+            mEventBus.post(new DataAvailableEvent(data));
+        }
     }
 
     public boolean hasData() {
@@ -85,5 +96,10 @@ public class DataManager {
         Type arrayListType = new TypeToken<ArrayList<Data>>() {}.getType();
 
         return gson.fromJson(gsonStr, arrayListType);
+    }
+
+    @Subscribe
+    public void onDataEvent(final DataEvent event) {
+        addData(event.data);
     }
 }

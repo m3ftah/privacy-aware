@@ -4,6 +4,9 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import de.greenrobot.dao.query.Query;
 import de.greenrobot.dao.query.QueryBuilder;
 import fr.rsommerard.privacyaware.WiFiDirect;
@@ -26,8 +29,9 @@ public class DeviceManager {
 
     private final SecureRandom mRandom;
     private final DeviceDao mDeviceDao;
+    private final EventBus mEventBus;
 
-    public DeviceManager(final Context context) {
+    public DeviceManager(final Context context, final EventBus eventBus) {
         DevOpenHelper helper = new DevOpenHelper(context, "privacy-aware-db", null);
         SQLiteDatabase mDb = helper.getWritableDatabase();
         DaoMaster mDaoMaster = new DaoMaster(mDb);
@@ -37,6 +41,18 @@ public class DeviceManager {
         mDeviceDao.deleteAll(); // TODO: Delete this line
 
         mRandom = new SecureRandom();
+
+        mEventBus = eventBus;
+        mEventBus.register(this);
+    }
+
+    @Subscribe
+    public void onDeviceEvent(final DeviceEvent event) {
+        if (containsDevice(event.device)) {
+            updateDevice(event.device);
+        } else {
+            addDevice(event.device);
+        }
     }
 
     public Device getDevice() {
@@ -67,7 +83,7 @@ public class DeviceManager {
         return query.list().size() != 0;
     }
 
-    public boolean containsDevice(final Device device) {
+    private boolean containsDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -76,7 +92,7 @@ public class DeviceManager {
         return query.unique() != null;
     }
 
-    public void updateDevice(final Device device) {
+    private void updateDevice(final Device device) {
         QueryBuilder<Device> qBuilder = mDeviceDao.queryBuilder();
         qBuilder.where(DeviceDao.Properties.Address.eq(device.getAddress()));
 
@@ -89,7 +105,7 @@ public class DeviceManager {
         Log.i(WiFiDirect.TAG, "Update " + d.toString() + " to " + device.toString());
     }
 
-    public void addDevice(final Device device) {
+    private void addDevice(final Device device) {
         mDeviceDao.insert(device);
         Log.i(WiFiDirect.TAG, "Insert " + device.toString());
     }

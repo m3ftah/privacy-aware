@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 
 import fr.rsommerard.privacyaware.wifidirect.WiFiDirectManager;
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(WiFiDirect.TAG, "Start");
 
                 try {
-                    mWiFiDirectManager = new WiFiDirectManager(MainActivity.this);
+                    mWiFiDirectManager = new WiFiDirectManager(MainActivity.this, EventBus.getDefault());
                 } catch (IOException | WiFiException e) {
                     e.printStackTrace();
                 }

@@ -6,6 +6,9 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,6 +16,9 @@ import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Device;
+import fr.rsommerard.privacyaware.wifidirect.connection.ConnectedEvent;
+import fr.rsommerard.privacyaware.wifidirect.connection.DisconnectedEvent;
+import fr.rsommerard.privacyaware.wifidirect.device.DeviceEvent;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
 
 public class ServiceDiscoveryManager {
@@ -23,6 +29,7 @@ public class ServiceDiscoveryManager {
     private static final int SERVICE_DISCOVERY_INTERVAL =  17000;
 
     private final DeviceManager mDeviceManager;
+    private final EventBus mEventBus;
     private WifiP2pDnsSdServiceInfo mWifiP2pDnsSdServiceInfo;
     private CustomActionListener mAddLocalServiceActionListener;
     private CustomDnsSdServiceResponseListener mDnsSdServiceResponseListener;
@@ -42,7 +49,8 @@ public class ServiceDiscoveryManager {
 
     public ServiceDiscoveryManager(final WifiP2pManager manager,
                                    final WifiP2pManager.Channel channel,
-                                   final DeviceManager deviceManager) {
+                                   final DeviceManager deviceManager,
+                                   final EventBus eventBus) {
 
         mWiFiP2pManager = manager;
         mWiFiP2pChannel = channel;
@@ -50,6 +58,9 @@ public class ServiceDiscoveryManager {
         mDeviceManager = deviceManager;
 
         initialize();
+
+        mEventBus = eventBus;
+        mEventBus.register(this);
     }
 
     public void initialize() {
@@ -190,12 +201,25 @@ public class ServiceDiscoveryManager {
                 device.setAddress(srcDevice.deviceAddress);
                 device.setTimestamp(Long.toString(System.currentTimeMillis()));
 
-                if (mDeviceManager.containsDevice(device)) {
-                    mDeviceManager.updateDevice(device);
-                } else {
-                    mDeviceManager.addDevice(device);
-                }
+                mEventBus.post(new DeviceEvent(device));
             }
+        }
+    }
+
+    @Subscribe
+    public void onStartDiscoveryEvent(final StartDiscoveryEvent event) {
+        startDiscovery();
+    }
+
+    @Subscribe
+    public void onConnectedEvent(final ConnectedEvent event) {
+        stopDiscovery();
+    }
+
+    @Subscribe
+    public void onDisconnectedEvent(final DisconnectedEvent event) {
+        if (!isServiceDiscoveryStarted()) {
+            startDiscovery();
         }
     }
 }

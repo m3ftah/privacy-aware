@@ -11,6 +11,8 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -33,6 +35,7 @@ public class ConnectionManager {
     private final DataManager mDataManager;
     private final ScheduledExecutorService mExecutor;
     private final ServiceDiscoveryManager mServiceDiscoveryManager;
+    private final EventBus mEventBus;
 
     private NetworkInfo mNetworkInfo;
 
@@ -40,7 +43,11 @@ public class ConnectionManager {
                              final WifiP2pManager manager,
                              final WifiP2pManager.Channel channel,
                              final ServiceDiscoveryManager serviceDiscoveryManager,
-                             final DataManager dataManager) throws IOException {
+                             final DataManager dataManager,
+                             final EventBus eventBus) throws IOException {
+
+        mEventBus = eventBus;
+        mEventBus.register(this);
 
         mWifiP2pManager = manager;
         mWifiP2pChannel = channel;
@@ -60,6 +67,8 @@ public class ConnectionManager {
 
         mExecutor = Executors.newSingleThreadScheduledExecutor();
     }
+
+
 
     public void stop(final Context context) {
         mExecutor.shutdown();
@@ -151,16 +160,14 @@ public class ConnectionManager {
                 Log.d(WiFiDirect.TAG, mNetworkInfo.toString());
 
                 if (!mNetworkInfo.isConnected()) {
-                    if (!mServiceDiscoveryManager.isServiceDiscoveryStarted()) {
-                        mServiceDiscoveryManager.startDiscovery();
-                    }
+                    mEventBus.post(new DisconnectedEvent());
                     return;
                 }
 
-                mServiceDiscoveryManager.stopDiscovery();
+                mEventBus.post(new ConnectedEvent(wifiP2pInfo.groupOwnerAddress));
 
                 if (wifiP2pInfo.isGroupOwner) {
-                    new Active(wifiP2pInfo.groupOwnerAddress, mDataManager).start();
+                    new Active(wifiP2pInfo.groupOwnerAddress, mDataManager, mEventBus).start();
                 }
             }
         }

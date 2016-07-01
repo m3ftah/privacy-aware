@@ -5,12 +5,16 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
+import fr.rsommerard.privacyaware.data.DataAvailableEvent;
 import fr.rsommerard.privacyaware.data.DataManager;
 import fr.rsommerard.privacyaware.wifidirect.connection.ConnectionManager;
 import fr.rsommerard.privacyaware.wifidirect.device.DeviceManager;
@@ -23,11 +27,14 @@ public class WiFiDirectManager {
     private final ConnectionManager mConnectionManager;
     private final DeviceManager mDeviceManager;
     private final DataManager mDataManager;
+    private final EventBus mEventBus;
 
     private int mNetId;
 
-    public WiFiDirectManager(final Context context) throws IOException, WiFiException {
+    public WiFiDirectManager(final Context context, final EventBus eventBus) throws IOException, WiFiException {
         WifiP2pManager wiFiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
+
+        mEventBus = eventBus;
 
         WifiP2pManager.ChannelListener initializeChannelListener = new CustomChannelListener();
         WifiP2pManager.Channel wiFiP2pChannel = wiFiP2pManager.initialize(context, context.getMainLooper(), initializeChannelListener);
@@ -42,17 +49,17 @@ public class WiFiDirectManager {
             throw new WiFiException("The WiFi is not enabled.");
         }
 
-        mDeviceManager = new DeviceManager(context);
+        mDeviceManager = new DeviceManager(context, mEventBus);
 
-        mDataManager = new DataManager(context);
+        mDataManager = new DataManager(context, mEventBus);
         WiFiDirect.populateDataTable(mDataManager, 5);
 
         disconnectWiFi();
 
-        mServiceDiscoveryManager = new ServiceDiscoveryManager(wiFiP2pManager, wiFiP2pChannel, mDeviceManager);
-        mServiceDiscoveryManager.startDiscovery();
+        mServiceDiscoveryManager = new ServiceDiscoveryManager(wiFiP2pManager, wiFiP2pChannel, mDeviceManager, mEventBus);
+        mEventBus.post(new StartDiscoveryEvent());
 
-        mConnectionManager = new ConnectionManager(context, wiFiP2pManager, wiFiP2pChannel, mServiceDiscoveryManager, mDataManager);
+        mConnectionManager = new ConnectionManager(context, wiFiP2pManager, wiFiP2pChannel, mServiceDiscoveryManager, mDataManager, mEventBus);
     }
 
     public void process() {

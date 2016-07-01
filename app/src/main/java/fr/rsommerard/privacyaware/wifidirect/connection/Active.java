@@ -3,6 +3,8 @@ package fr.rsommerard.privacyaware.wifidirect.connection;
 import android.database.sqlite.SQLiteConstraintException;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,6 +18,7 @@ import java.util.Random;
 
 import fr.rsommerard.privacyaware.WiFiDirect;
 import fr.rsommerard.privacyaware.dao.Data;
+import fr.rsommerard.privacyaware.data.DataEvent;
 import fr.rsommerard.privacyaware.data.DataManager;
 
 public class Active extends Thread implements Runnable {
@@ -24,12 +27,15 @@ public class Active extends Thread implements Runnable {
     private final InetAddress mGroupOwnerAddress;
     private final DataManager mDataManager;
     private final Random mRandom;
+    private final EventBus mEventBus;
 
-    public Active(final InetAddress groupOwnerAddress, final DataManager dataManager) {
+    public Active(final InetAddress groupOwnerAddress, final DataManager dataManager, final EventBus eventBus) {
         mGroupOwnerAddress = groupOwnerAddress;
         mDataManager = dataManager;
 
         mRandom = new Random();
+
+        mEventBus = eventBus;
     }
 
     @Override
@@ -64,7 +70,7 @@ public class Active extends Thread implements Runnable {
         Log.i(WiFiDirect.TAG, data + " received");
 
         for (Data d : data) {
-            mDataManager.addData(d);
+            mEventBus.post(new DataEvent(d));
         }
 
         sendMessage(socket, Protocol.ACK);
