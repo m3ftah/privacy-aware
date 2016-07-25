@@ -121,7 +121,7 @@ public class DataManagerTest {
         assertEquals("should gson a single data", expected.getContent(), data.getContent());
     }*/
 
-    @Test
+    /*@Test
     public void testGsonifyListOfData() {
         List<Data> data = new ArrayList<>();
         data.add(new Data(null, "Époustouflant"));
@@ -130,7 +130,7 @@ public class DataManagerTest {
 
         String expected = "[{\"content\":\"Époustouflant\"},{\"content\":\"Ornithorynque\"},{\"content\":\"Épitaphe\"}]";
         assertEquals("should gson a list of data", expected, DataManager.gsonify(data));
-    }
+    }*/
 
     @Test
     public void testGsonifyEmptyListOfData() {

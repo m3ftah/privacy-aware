@@ -81,7 +81,7 @@ public class Active extends Thread implements Runnable {
 
         List<Data> dataList = new ArrayList<Data>();
         for (int i = 0; i < nb; i++) {
-            dataList.add(new Data(null, data.get(i).getContent()));
+            dataList.add(new Data(null, data.get(i).getContent(), data.get(i).getIdentifier()));
         }
 
         waitAndCheck(socket, Protocol.SEND);
